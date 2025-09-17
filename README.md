@@ -64,25 +64,3 @@ npm run dev
 cd frontend
 npm start
 ```
-
-## Estructura del Proyecto
-
-```
-sistemaacomodaciones/
-├── backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── middleware/
-│   │   └── config/
-│   ├── .env
-│   └── package.json
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   ├── pages/
-    │   ├── services/
-    │   └── utils/
-    └── package.json
-``` 
