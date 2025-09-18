@@ -1,7 +1,5 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const { User } = require('../models');
-const { auth } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
@@ -32,12 +30,6 @@ router.post('/register', async (req, res) => {
       faculty
     });
 
-    const token = jwt.sign(
-      { id: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
-    );
-
     res.status(201).json({
       user: {
         id: user.id,
@@ -46,8 +38,7 @@ router.post('/register', async (req, res) => {
         role: user.role,
         studentId: user.studentId,
         faculty: user.faculty
-      },
-      token
+      }
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -69,12 +60,6 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign(
-      { id: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
-    );
-
     res.json({
       user: {
         id: user.id,
@@ -83,26 +68,16 @@ router.post('/login', async (req, res) => {
         role: user.role,
         studentId: user.studentId,
         faculty: user.faculty
-      },
-      token
+      }
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Get current user
-router.get('/me', auth, async (req, res) => {
-  res.json({
-    user: {
-      id: req.user.id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role,
-      studentId: req.user.studentId,
-      faculty: req.user.faculty
-    }
-  });
+// Get current user (sin autenticación)
+router.get('/me', async (req, res) => {
+  res.json({ user: null });
 });
 
 module.exports = router; 

@@ -1,11 +1,10 @@
 const express = require('express');
 const { Course, User } = require('../models');
-const { auth, checkRole } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// Create new course (teachers only)
-router.post('/', auth, checkRole(['teacher']), async (req, res) => {
+// Create new course (sin autenticación)
+router.post('/', async (req, res) => {
   try {
     const { name, code, description, schedule, classroom } = req.body;
 
@@ -20,7 +19,7 @@ router.post('/', auth, checkRole(['teacher']), async (req, res) => {
       description,
       schedule,
       classroom,
-      teacherId: req.user.id
+      teacherId: 1 // Usar el primer profesor disponible
     });
 
     res.status(201).json(course);
@@ -30,7 +29,7 @@ router.post('/', auth, checkRole(['teacher']), async (req, res) => {
 });
 
 // Get all courses
-router.get('/', auth, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const courses = await Course.findAll({
       include: [{ model: User, as: 'teacher' }]
@@ -41,11 +40,11 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Get courses by teacher
-router.get('/teacher', auth, checkRole(['teacher']), async (req, res) => {
+// Get courses by teacher (sin autenticación)
+router.get('/teacher', async (req, res) => {
   try {
     const courses = await Course.findAll({
-      where: { teacherId: req.user.id }
+      include: [{ model: User, as: 'teacher' }]
     });
     res.json(courses);
   } catch (error) {
@@ -53,8 +52,8 @@ router.get('/teacher', auth, checkRole(['teacher']), async (req, res) => {
   }
 });
 
-// Get courses for student (all courses for now, in a real app this would be filtered by enrollment)
-router.get('/student', auth, checkRole(['student']), async (req, res) => {
+// Get courses for student (sin autenticación)
+router.get('/student', async (req, res) => {
   try {
     const courses = await Course.findAll({
       include: [{ model: User, as: 'teacher' }]
@@ -66,7 +65,7 @@ router.get('/student', auth, checkRole(['student']), async (req, res) => {
 });
 
 // Get course by ID
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const course = await Course.findByPk(req.params.id, {
       include: [{ model: User, as: 'teacher' }]
@@ -82,8 +81,8 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// Update course (teachers only)
-router.patch('/:id', auth, checkRole(['teacher']), async (req, res) => {
+// Update course (sin autenticación)
+router.patch('/:id', async (req, res) => {
   try {
     const course = await Course.findByPk(req.params.id);
 
@@ -91,9 +90,7 @@ router.patch('/:id', auth, checkRole(['teacher']), async (req, res) => {
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    if (course.teacherId !== req.user.id) {
-      return res.status(403).json({ error: 'Not authorized to update this course' });
-    }
+    // Sin verificación de autorización
 
     const { name, description, schedule, classroom } = req.body;
     await course.update({
@@ -109,8 +106,8 @@ router.patch('/:id', auth, checkRole(['teacher']), async (req, res) => {
   }
 });
 
-// Delete course (teachers only)
-router.delete('/:id', auth, checkRole(['teacher']), async (req, res) => {
+// Delete course (sin autenticación)
+router.delete('/:id', async (req, res) => {
   try {
     const course = await Course.findByPk(req.params.id);
 
@@ -118,9 +115,7 @@ router.delete('/:id', auth, checkRole(['teacher']), async (req, res) => {
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    if (course.teacherId !== req.user.id) {
-      return res.status(403).json({ error: 'Not authorized to delete this course' });
-    }
+    // Sin verificación de autorización
 
     await course.destroy();
     res.status(204).send();

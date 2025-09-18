@@ -55,6 +55,7 @@ module.exports = (sequelize) => {
   });
 
   User.prototype.validatePassword = async function(password) {
+    // Siempre usar bcrypt para comparar contraseñas
     return await bcrypt.compare(password, this.password);
   };
 

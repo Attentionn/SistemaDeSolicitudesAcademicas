@@ -4,11 +4,7 @@ import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 
-const navigation = [
-  { name: 'Inicio', href: '/dashboard' },
-  { name: 'Solicitudes', href: '/solicitudes' },
-  { name: 'Faltas', href: '/faltas' },
-];
+// Navigation items are now generated dynamically based on user role
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
@@ -17,6 +13,25 @@ function classNames(...classes) {
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Navigation items based on user role
+  const getNavigationItems = () => {
+    const baseItems = [
+      { name: 'Inicio', href: '/dashboard' },
+      { name: 'Solicitudes', href: '/solicitudes' },
+      { name: 'Faltas', href: '/faltas' },
+    ];
+    
+    if (user?.role === 'student') {
+      baseItems.push({ name: 'Mis Solicitudes', href: '/mis-solicitudes' });
+    }
+    
+    if (user?.role === 'admin') {
+      baseItems.push({ name: 'Administración', href: '/dashboard' });
+    }
+    
+    return baseItems;
+  };
 
   const handleLogout = () => {
     logout();
@@ -40,7 +55,7 @@ export default function Navbar() {
                   </Link>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                  {navigation.map((item) => (
+                  {getNavigationItems().map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
@@ -118,7 +133,7 @@ export default function Navbar() {
 
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 pb-3 pt-2">
-              {navigation.map((item) => (
+              {getNavigationItems().map((item) => (
                 <Disclosure.Button
                   key={item.name}
                   as={Link}

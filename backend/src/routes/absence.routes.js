@@ -1,14 +1,14 @@
 const express = require('express');
 const { Absence, Course, User } = require('../models');
-const { auth, checkRole } = require('../middleware/auth.middleware');
+// Sin autenticación
 
 const router = express.Router();
 
 // Get all absences for a student
-router.get('/student', auth, checkRole(['student']), async (req, res) => {
+router.get('/student', async (req, res) => {
   try {
     const absences = await Absence.findAll({
-      where: { studentId: req.user.id },
+      where: {}, // Sin autenticación, devolver todas
       include: [
         { model: Course, as: 'course' },
         { model: User, as: 'teacher' }
@@ -22,7 +22,7 @@ router.get('/student', auth, checkRole(['student']), async (req, res) => {
 });
 
 // Create new absence notification (students only)
-router.post('/', auth, checkRole(['student']), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const {
       fecha,
@@ -44,7 +44,7 @@ router.post('/', auth, checkRole(['student']), async (req, res) => {
       materia,
       motivo,
       tipo: 'prevista',
-      studentId: req.user.id,
+      studentId: 1, // Usar el primer estudiante disponible
       courseId,
       teacherId: course.teacher.id
     });
@@ -56,10 +56,10 @@ router.post('/', auth, checkRole(['student']), async (req, res) => {
 });
 
 // Get all absences for a teacher (from their students)
-router.get('/teacher', auth, checkRole(['teacher']), async (req, res) => {
+router.get('/teacher', async (req, res) => {
   try {
     const { studentId } = req.query;
-    const whereClause = { teacherId: req.user.id };
+    const whereClause = {}; // Sin autenticación, devolver todas
     
     if (studentId) {
       whereClause.studentId = studentId;
@@ -80,7 +80,7 @@ router.get('/teacher', auth, checkRole(['teacher']), async (req, res) => {
 });
 
 // Update absence (teachers only) - for adding observations or changing type
-router.patch('/:id', auth, checkRole(['teacher']), async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const { tipo, observaciones } = req.body;
     const absence = await Absence.findByPk(req.params.id);
@@ -89,9 +89,7 @@ router.patch('/:id', auth, checkRole(['teacher']), async (req, res) => {
       return res.status(404).json({ error: 'Absence not found' });
     }
 
-    if (absence.teacherId !== req.user.id) {
-      return res.status(403).json({ error: 'Not authorized to update this absence' });
-    }
+    // Sin verificación de autorización
 
     await absence.update({
       tipo,
@@ -105,7 +103,7 @@ router.patch('/:id', auth, checkRole(['teacher']), async (req, res) => {
 });
 
 // Get absence by ID
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const absence = await Absence.findByPk(req.params.id, {
       include: [
@@ -121,14 +119,28 @@ router.get('/:id', auth, async (req, res) => {
 
     // Check if user has permission to view this absence
     if (
-      req.user.role !== 'admin' &&
-      absence.studentId !== req.user.id &&
-      absence.teacherId !== req.user.id
+      false // Sin verificación de autorización
     ) {
       return res.status(403).json({ error: 'Not authorized to view this absence' });
     }
 
     res.json(absence);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete absence notification
+router.delete('/:id', async (req, res) => {
+  try {
+    const absence = await Absence.findByPk(req.params.id);
+
+    if (!absence) {
+      return res.status(404).json({ error: 'Absence notification not found' });
+    }
+
+    await absence.destroy();
+    res.status(204).send();
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

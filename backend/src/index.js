@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const { sequelize } = require('./models');
+const bcrypt = require('bcryptjs');
+const { sequelize, User } = require('./models');
 require('dotenv').config();
 
 const app = express();
@@ -16,6 +17,7 @@ app.use('/api/users', require('./routes/user.routes'));
 app.use('/api/courses', require('./routes/course.routes'));
 app.use('/api/accommodations', require('./routes/accommodation.routes'));
 app.use('/api/absences', require('./routes/absence.routes'));
+app.use('/api/requests', require('./routes/requests.routes'));
 
 const PORT = process.env.PORT || 5000;
 

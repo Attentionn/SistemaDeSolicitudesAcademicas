@@ -65,3 +65,22 @@ export const courseAPI = {
   getTeacherCourses: () => 
     axios.get(`${API_BASE_URL}/courses/teacher`)
 };
+
+// User API
+export const userAPI = {
+  // Get all users (super admin only)
+  getAllUsers: () => 
+    axios.get(`${API_BASE_URL}/users`),
+  
+  // Create user (super admin only)
+  createUser: (userData) => 
+    axios.post(`${API_BASE_URL}/users`, userData),
+  
+  // Update user (super admin only)
+  updateUser: (id, userData) => 
+    axios.put(`${API_BASE_URL}/users/${id}`, userData),
+  
+  // Delete user (super admin only)
+  deleteUser: (id) => 
+    axios.delete(`${API_BASE_URL}/users/${id}`)
+};

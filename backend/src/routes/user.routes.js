@@ -1,14 +1,16 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const { User } = require('../models');
-const { auth, checkRole } = require('../middleware/auth.middleware');
+// Sin autenticación
 
 const router = express.Router();
 
-// Get all users (admin only)
-router.get('/', auth, checkRole(['admin']), async (req, res) => {
+// Get all users (sin autenticación)
+router.get('/', async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: { exclude: ['password'] }
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']]
     });
     res.json(users);
   } catch (error) {
@@ -16,8 +18,99 @@ router.get('/', auth, checkRole(['admin']), async (req, res) => {
   }
 });
 
+// Create user (sin autenticación)
+router.post('/', async (req, res) => {
+  try {
+    const { name, email, password, role, studentId, faculty } = req.body;
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    // Check if studentId already exists (for students)
+    if (role === 'student' && studentId) {
+      const existingStudent = await User.findOne({ where: { studentId } });
+      if (existingStudent) {
+        return res.status(400).json({ error: 'Student ID already registered' });
+      }
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      studentId: role === 'student' ? studentId : null,
+      faculty
+    });
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user.toJSON();
+    res.status(201).json(userWithoutPassword);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update user (sin autenticación)
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, role, studentId, faculty, password } = req.body;
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if email already exists (excluding current user)
+    if (email !== user.email) {
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+    }
+
+    // Check if studentId already exists (for students, excluding current user)
+    if (role === 'student' && studentId && studentId !== user.studentId) {
+      const existingStudent = await User.findOne({ where: { studentId } });
+      if (existingStudent) {
+        return res.status(400).json({ error: 'Student ID already registered' });
+      }
+    }
+
+    // Prepare update data
+    const updateData = {
+      name,
+      email,
+      role,
+      studentId: role === 'student' ? studentId : null,
+      faculty
+    };
+
+    // Hash new password if provided
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    await user.update(updateData);
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user.toJSON();
+    res.json(userWithoutPassword);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Get user by ID
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id, {
       attributes: { exclude: ['password'] }
@@ -27,10 +120,7 @@ router.get('/:id', auth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Only allow users to view their own profile or admins to view any profile
-    if (req.user.role !== 'admin' && req.user.id !== parseInt(req.params.id)) {
-      return res.status(403).json({ error: 'Not authorized to view this profile' });
-    }
+    // Sin verificación de autorización
 
     res.json(user);
   } catch (error) {
@@ -39,7 +129,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // Update user profile
-router.patch('/:id', auth, async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
 
@@ -47,10 +137,7 @@ router.patch('/:id', auth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Only allow users to update their own profile or admins to update any profile
-    if (req.user.role !== 'admin' && req.user.id !== parseInt(req.params.id)) {
-      return res.status(403).json({ error: 'Not authorized to update this profile' });
-    }
+    // Sin verificación de autorización
 
     const { name, email, studentId, faculty } = req.body;
     await user.update({
@@ -73,13 +160,18 @@ router.patch('/:id', auth, async (req, res) => {
   }
 });
 
-// Delete user (admin only)
-router.delete('/:id', auth, checkRole(['admin']), async (req, res) => {
+// Delete user (sin autenticación)
+router.delete('/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent deleting admin
+    if (user.role === 'admin') {
+      return res.status(400).json({ error: 'Cannot delete admin' });
     }
 
     await user.destroy();

@@ -1,11 +1,11 @@
 const express = require('express');
 const { Accommodation, Course, User, Absence } = require('../models');
-const { auth, checkRole } = require('../middleware/auth.middleware');
+// Sin autenticación
 
 const router = express.Router();
 
-// Create new accommodation request (students only)
-router.post('/', auth, checkRole(['student']), async (req, res) => {
+// Create new accommodation request (sin autenticación)
+router.post('/', async (req, res) => {
   try {
     const {
       type,
@@ -38,7 +38,7 @@ router.post('/', auth, checkRole(['student']), async (req, res) => {
       motivo,
       fechaOriginal,
       fechaPropuesta,
-      studentId: req.user.id,
+      studentId: 1, // Usar el primer estudiante disponible
       courseId,
       teacherId: course.teacher.id
     });
@@ -50,10 +50,10 @@ router.post('/', auth, checkRole(['student']), async (req, res) => {
 });
 
 // Get all accommodations for a teacher with filtering
-router.get('/teacher', auth, checkRole(['teacher']), async (req, res) => {
+router.get('/teacher', async (req, res) => {
   try {
     const { type, status } = req.query;
-    const whereClause = { teacherId: req.user.id };
+    const whereClause = {}; // Sin autenticación, devolver todas
     
     if (type) {
       whereClause.type = type;
@@ -78,10 +78,10 @@ router.get('/teacher', auth, checkRole(['teacher']), async (req, res) => {
 });
 
 // Get all accommodations for a student
-router.get('/student', auth, checkRole(['student']), async (req, res) => {
+router.get('/student', async (req, res) => {
   try {
     const accommodations = await Accommodation.findAll({
-      where: { studentId: req.user.id },
+      where: {}, // Sin autenticación, devolver todas
       include: [
         { model: User, as: 'teacher' },
         { model: Course, as: 'course' }
@@ -94,7 +94,7 @@ router.get('/student', auth, checkRole(['student']), async (req, res) => {
 });
 
 // Update accommodation status (teachers only)
-router.patch('/:id', auth, checkRole(['teacher']), async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const { status, teacherResponse } = req.body;
     const accommodation = await Accommodation.findByPk(req.params.id);
@@ -103,9 +103,7 @@ router.patch('/:id', auth, checkRole(['teacher']), async (req, res) => {
       return res.status(404).json({ error: 'Accommodation request not found' });
     }
 
-    if (accommodation.teacherId !== req.user.id) {
-      return res.status(403).json({ error: 'Not authorized to update this request' });
-    }
+    // Sin verificación de autorización
 
     await accommodation.update({
       status,
@@ -119,7 +117,7 @@ router.patch('/:id', auth, checkRole(['teacher']), async (req, res) => {
 });
 
 // Get accommodation by ID
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const accommodation = await Accommodation.findByPk(req.params.id, {
       include: [
@@ -135,14 +133,28 @@ router.get('/:id', auth, async (req, res) => {
 
     // Check if user has permission to view this accommodation
     if (
-      req.user.role !== 'admin' &&
-      accommodation.studentId !== req.user.id &&
-      accommodation.teacherId !== req.user.id
+      false // Sin verificación de autorización
     ) {
       return res.status(403).json({ error: 'Not authorized to view this request' });
     }
 
     res.json(accommodation);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete accommodation request
+router.delete('/:id', async (req, res) => {
+  try {
+    const accommodation = await Accommodation.findByPk(req.params.id);
+
+    if (!accommodation) {
+      return res.status(404).json({ error: 'Accommodation request not found' });
+    }
+
+    await accommodation.destroy();
+    res.status(204).send();
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

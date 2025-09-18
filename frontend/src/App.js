@@ -7,6 +7,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import SolicitudesPage from './pages/SolicitudesPage';
 import AbsenceManagement from './pages/AbsenceManagement';
+import AdminPanel from './pages/AdminPanel';
+import StudentRequests from './pages/StudentRequests';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -55,6 +57,22 @@ function App() {
             element={
               <PrivateRoute>
                 <AbsenceManagement />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute>
+                <AdminPanel />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/mis-solicitudes"
+            element={
+              <PrivateRoute>
+                <StudentRequests />
               </PrivateRoute>
             }
           />
