@@ -17,7 +17,8 @@ router.post('/', async (req, res) => {
       courseId,
       motivo,
       fechaOriginal,
-      fechaPropuesta
+      fechaPropuesta,
+      studentId
     } = req.body;
 
     const course = await Course.findByPk(courseId, {
@@ -26,6 +27,10 @@ router.post('/', async (req, res) => {
 
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
+    }
+
+    if (!studentId) {
+      return res.status(400).json({ error: 'Student ID is required' });
     }
 
     const accommodation = await Accommodation.create({
@@ -38,7 +43,7 @@ router.post('/', async (req, res) => {
       motivo,
       fechaOriginal,
       fechaPropuesta,
-      studentId: 1, // Usar el primer estudiante disponible
+      studentId: studentId, // Usar el studentId del request (requerido)
       courseId,
       teacherId: course.teacher.id
     });

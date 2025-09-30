@@ -28,16 +28,34 @@ export default function AdminDashboard() {
 
   const handleApproveRequest = async (requestId, type) => {
     try {
-      await axios.patch(`http://localhost:5000/api/requests/${requestId}/approve`);
+      if (type === 'accommodation') {
+        await axios.patch(`http://localhost:5000/api/accommodations/${requestId}`, {
+          status: 'approved'
+        });
+      } else if (type === 'absence') {
+        await axios.patch(`http://localhost:5000/api/absences/${requestId}`, {
+          status: 'approved'
+        });
+      }
       fetchRequests(); // Refresh the list
     } catch (error) {
       console.error('Error approving request:', error);
     }
   };
 
-  const handleRejectRequest = async (requestId, type) => {
+  const handleRejectRequest = async (requestId, type, teacherResponse = '') => {
     try {
-      await axios.patch(`http://localhost:5000/api/requests/${requestId}/reject`);
+      if (type === 'accommodation') {
+        await axios.patch(`http://localhost:5000/api/accommodations/${requestId}`, {
+          status: 'rejected',
+          teacherResponse
+        });
+      } else if (type === 'absence') {
+        await axios.patch(`http://localhost:5000/api/absences/${requestId}`, {
+          status: 'rejected',
+          observaciones: teacherResponse
+        });
+      }
       fetchRequests(); // Refresh the list
     } catch (error) {
       console.error('Error rejecting request:', error);
@@ -98,7 +116,7 @@ export default function AdminDashboard() {
       request.student?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.student?.studentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.course?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+      request.motivo?.toLowerCase().includes(searchTerm.toLowerCase());
     
     return statusMatch && searchMatch;
   });
@@ -265,11 +283,19 @@ export default function AdminDashboard() {
                         )}
                       </div>
 
-                      {request.reason && (
+                      {request.motivo && (
                         <div className="mb-4">
                           <p className="text-sm text-gray-500">Motivo</p>
                           <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
-                            {request.reason}
+                            {request.motivo}
+                          </p>
+                        </div>
+                      )}
+                      {request.description && (
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-500">Descripción Adicional</p>
+                          <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
+                            {request.description}
                           </p>
                         </div>
                       )}

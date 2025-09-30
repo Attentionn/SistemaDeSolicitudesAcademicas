@@ -6,11 +6,21 @@ const router = express.Router();
 // Create new course (sin autenticación)
 router.post('/', async (req, res) => {
   try {
-    const { name, code, description, schedule, classroom } = req.body;
+    const { name, code, description, schedule, classroom, teacherId } = req.body;
 
     const existingCourse = await Course.findOne({ where: { code } });
     if (existingCourse) {
       return res.status(400).json({ error: 'Course code already exists' });
+    }
+
+    // Si no se proporciona teacherId, usar el primer profesor disponible
+    let finalTeacherId = teacherId;
+    if (!finalTeacherId) {
+      const firstTeacher = await User.findOne({ where: { role: 'teacher' } });
+      if (!firstTeacher) {
+        return res.status(400).json({ error: 'No teachers available. Create a teacher first.' });
+      }
+      finalTeacherId = firstTeacher.id;
     }
 
     const course = await Course.create({
@@ -19,7 +29,7 @@ router.post('/', async (req, res) => {
       description,
       schedule,
       classroom,
-      teacherId: 1 // Usar el primer profesor disponible
+      teacherId: finalTeacherId
     });
 
     res.status(201).json(course);

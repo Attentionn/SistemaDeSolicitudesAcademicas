@@ -23,18 +23,36 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleApproveRequest = async (requestId) => {
+  const handleApproveRequest = async (requestId, type) => {
     try {
-      await axios.patch(`/api/requests/${requestId}/approve`);
+      if (type === 'accommodation') {
+        await axios.patch(`http://localhost:5000/api/accommodations/${requestId}`, {
+          status: 'approved'
+        });
+      } else if (type === 'absence') {
+        await axios.patch(`http://localhost:5000/api/absences/${requestId}`, {
+          status: 'approved'
+        });
+      }
       fetchRequests(); // Refresh the list
     } catch (error) {
       console.error('Error approving request:', error);
     }
   };
 
-  const handleRejectRequest = async (requestId) => {
+  const handleRejectRequest = async (requestId, type, teacherResponse = '') => {
     try {
-      await axios.patch(`/api/requests/${requestId}/reject`);
+      if (type === 'accommodation') {
+        await axios.patch(`http://localhost:5000/api/accommodations/${requestId}`, {
+          status: 'rejected',
+          teacherResponse
+        });
+      } else if (type === 'absence') {
+        await axios.patch(`http://localhost:5000/api/absences/${requestId}`, {
+          status: 'rejected',
+          observaciones: teacherResponse
+        });
+      }
       fetchRequests(); // Refresh the list
     } catch (error) {
       console.error('Error rejecting request:', error);
@@ -235,11 +253,19 @@ export default function TeacherDashboard() {
                       </div>
                     </div>
 
-                    {request.reason && (
+                    {request.motivo && (
                       <div className="mb-4">
                         <p className="text-sm text-gray-500">Motivo</p>
                         <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
-                          {request.reason}
+                          {request.motivo}
+                        </p>
+                      </div>
+                    )}
+                    {request.description && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-500">Descripción Adicional</p>
+                        <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
+                          {request.description}
                         </p>
                       </div>
                     )}
@@ -327,7 +353,7 @@ export default function TeacherDashboard() {
                   {request.status === 'pending' && (
                     <div className="flex space-x-2 ml-4">
                       <button
-                        onClick={() => handleApproveRequest(request.id)}
+                        onClick={() => handleApproveRequest(request.id, request.type)}
                         className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                       >
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -336,7 +362,10 @@ export default function TeacherDashboard() {
                         Aprobar
                       </button>
                       <button
-                        onClick={() => handleRejectRequest(request.id)}
+                        onClick={() => {
+                          const response = prompt('Motivo del rechazo (opcional):');
+                          handleRejectRequest(request.id, request.type, response || '');
+                        }}
                         className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">

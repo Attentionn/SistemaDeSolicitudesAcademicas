@@ -86,7 +86,8 @@ export default function SolicitudesPage() {
         courseId: parseInt(formData.courseId),
         motivo: formData.motivo,
         description: formData.description,
-        requestedDate: formData.requestedDate
+        requestedDate: formData.requestedDate,
+        studentId: user?.id // Incluir el ID del usuario logueado
       };
 
       // Add specific fields based on request type
@@ -352,6 +353,13 @@ export default function SolicitudesPage() {
                                   <span className="font-medium">Motivo:</span> {request.motivo}
                                 </p>
                               </div>
+                              {request.description && (
+                                <div className="mt-1">
+                                  <p className="text-sm text-gray-600">
+                                    <span className="font-medium">Descripción Adicional:</span> {request.description}
+                                  </p>
+                                </div>
+                              )}
                               {request.fechaOriginal && (
                                 <div className="mt-1">
                                   <p className="text-sm text-gray-600">
@@ -473,6 +481,13 @@ export default function SolicitudesPage() {
                               <span className="font-medium">Motivo:</span> {request.motivo}
                             </p>
                           </div>
+                          {request.description && (
+                            <div className="mt-1">
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Descripción Adicional:</span> {request.description}
+                              </p>
+                            </div>
+                          )}
                           {request.fechaOriginal && (
                             <div className="mt-1">
                               <p className="text-sm text-gray-600">
@@ -484,6 +499,13 @@ export default function SolicitudesPage() {
                             <div className="mt-1">
                               <p className="text-sm text-gray-600">
                                 <span className="font-medium">Fecha Propuesta:</span> {new Date(request.fechaPropuesta).toLocaleDateString()}
+                              </p>
+                            </div>
+                          )}
+                          {request.teacherResponse && (
+                            <div className="mt-1">
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Respuesta del Profesor:</span> {request.teacherResponse}
                               </p>
                             </div>
                           )}

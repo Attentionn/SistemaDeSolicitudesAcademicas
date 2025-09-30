@@ -5,7 +5,10 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "add-user": "node scripts/addUser.js",
+    "seed-users": "node scripts/seedUsers.js",
+    "seed-courses": "node scripts/seedCourses.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -81,7 +81,8 @@ export default function AbsenceManagement() {
         fecha: formData.fecha,
         materia: formData.materia,
         motivo: formData.motivo,
-        courseId: parseInt(formData.courseId)
+        courseId: parseInt(formData.courseId),
+        studentId: user?.id // Incluir el ID del usuario logueado
       };
 
       await absenceAPI.createAbsence(absenceData);

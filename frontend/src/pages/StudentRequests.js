@@ -243,11 +243,19 @@ export default function StudentRequests() {
                       </div>
                     </div>
 
-                    {request.reason && (
+                    {request.motivo && (
                       <div className="mb-4">
                         <p className="text-sm text-gray-500">Motivo</p>
                         <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
-                          {request.reason}
+                          {request.motivo}
+                        </p>
+                      </div>
+                    )}
+                    {request.description && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-500">Descripción Adicional</p>
+                        <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
+                          {request.description}
                         </p>
                       </div>
                     )}
