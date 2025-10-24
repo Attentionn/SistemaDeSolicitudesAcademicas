@@ -37,14 +37,11 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
+    // Create user (el modelo ya maneja el hash automáticamente)
     const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password, // El modelo se encarga del hash
       role,
       studentId: role === 'student' ? studentId : null,
       faculty
@@ -94,9 +91,9 @@ router.put('/:id', async (req, res) => {
       faculty
     };
 
-    // Hash new password if provided
+    // Add password if provided (el modelo maneja el hash)
     if (password) {
-      updateData.password = await bcrypt.hash(password, 10);
+      updateData.password = password;
     }
 
     await user.update(updateData);

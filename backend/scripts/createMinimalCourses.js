@@ -91,27 +91,27 @@ User.hasMany(Course, { foreignKey: 'teacherId', as: 'courses' });
 
 const minimalCourses = [
   {
-    name: 'Introducción a la Programación',
-    code: 'PROG101',
-    description: 'Curso básico de programación para principiantes',
+    name: 'Programación Web',
+    code: 'TELM301',
+    description: 'Desarrollo de aplicaciones web con HTML, CSS y JavaScript',
     schedule: 'Lunes y Miércoles 10:00-12:00',
-    classroom: 'Aula 101',
+    classroom: 'Laboratorio A-101',
     teacherId: 2 // Profesor Principal
   },
   {
-    name: 'Psicología General',
-    code: 'PSIC101',
-    description: 'Fundamentos de la psicología',
+    name: 'Redes de Computadoras',
+    code: 'TELM302',
+    description: 'Fundamentos de redes y protocolos de comunicación',
     schedule: 'Martes y Jueves 14:00-16:00',
-    classroom: 'Aula 201',
+    classroom: 'Laboratorio A-201',
     teacherId: 2 // Profesor Principal
   },
   {
-    name: 'Matemáticas Básicas',
-    code: 'MATH101',
-    description: 'Álgebra y geometría básica',
+    name: 'Base de Datos',
+    code: 'TELM303',
+    description: 'Diseño y administración de bases de datos',
     schedule: 'Lunes, Miércoles y Viernes 08:00-10:00',
-    classroom: 'Aula 301',
+    classroom: 'Laboratorio A-301',
     teacherId: 2 // Profesor Principal
   }
 ];
@@ -145,9 +145,9 @@ async function createMinimalCourses() {
     }
 
     console.log('\n📚 Cursos creados:');
-    console.log('📖 PROG101 - Introducción a la Programación');
-    console.log('📖 PSIC101 - Psicología General');
-    console.log('📖 MATH101 - Matemáticas Básicas');
+    console.log('📖 TELM301 - Programación Web');
+    console.log('📖 TELM302 - Redes de Computadoras');
+    console.log('📖 TELM303 - Base de Datos');
     
     console.log('\n✨ ¡Listo! Cursos creados y asignados al profesor.');
 

@@ -65,7 +65,7 @@ const minimalUsers = [
     password: 'admin123',
     role: 'admin',
     studentId: null,
-    faculty: 'Administración'
+    faculty: 'Telemática'
   },
   {
     name: 'Profesor Principal',
@@ -73,7 +73,7 @@ const minimalUsers = [
     password: 'prof123',
     role: 'teacher',
     studentId: null,
-    faculty: 'Psicología'
+    faculty: 'Telemática'
   },
   {
     name: 'Estudiante Prueba',
