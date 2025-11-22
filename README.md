@@ -16,7 +16,6 @@ Este sistema permite gestionar las acomodaciones y solicitudes especiales para e
 
 ### Frontend
 - React.js
-- Tailwind CSS
 - React Router
 - Axios
 
@@ -49,7 +48,7 @@ npm install
 ```
 
 4. Configurar variables de entorno:
-- Crear archivo `.env` en la carpeta backend basado en `.env.example`
+- Crear archivo `.env` en la carpeta backend
 
 ### Ejecución
 
