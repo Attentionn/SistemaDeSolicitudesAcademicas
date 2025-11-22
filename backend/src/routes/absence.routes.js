@@ -1,147 +1,136 @@
 const express = require('express');
-const { Absence, Course, User } = require('../models');
-// Sin autenticación
+const { Absence, User, Course } = require('../models');
+const { authenticateToken, authorizeRole } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// Get all absences for a student
-router.get('/student', async (req, res) => {
-  try {
-    const absences = await Absence.findAll({
-      where: {}, // Sin autenticación, devolver todas
-      include: [
-        { model: Course, as: 'course' },
-        { model: User, as: 'teacher' }
-      ],
-      order: [['fecha', 'DESC']]
-    });
-    res.json(absences);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Create new absence notification (students only)
-router.post('/', async (req, res) => {
-  try {
-    const {
-      fecha,
-      materia,
-      motivo,
-      courseId,
-      studentId
-    } = req.body;
-
-    const course = await Course.findByPk(courseId, {
-      include: [{ model: User, as: 'teacher' }]
-    });
-
-    if (!course) {
-      return res.status(404).json({ error: 'Course not found' });
-    }
-
-    if (!studentId) {
-      return res.status(400).json({ error: 'Student ID is required' });
-    }
-
-    const absence = await Absence.create({
-      fecha,
-      materia,
-      motivo,
-      tipo: 'prevista',
-      studentId: studentId, // Usar el studentId del request (requerido)
-      courseId,
-      teacherId: course.teacher.id
-    });
-
-    res.status(201).json(absence);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Get all absences for a teacher (from their students)
-router.get('/teacher', async (req, res) => {
+// Get absences by student (ESTUDIANTE ve sus propias ausencias, ADMIN/TEACHER ven todas)
+router.get('/student', authenticateToken, async (req, res) => {
   try {
     const { studentId } = req.query;
-    const whereClause = {}; // Sin autenticación, devolver todas
     
-    if (studentId) {
-      whereClause.studentId = studentId;
+    let whereClause = {};
+    
+    if (req.user.role === 'student') {
+      // Estudiante solo ve sus propias ausencias
+      whereClause.studentId = req.user.id;
+    } else if (req.user.role === 'teacher' || req.user.role === 'admin') {
+      // Teacher/Admin pueden filtrar por studentId o ver todas
+      if (studentId) {
+        whereClause.studentId = studentId;
+      }
     }
 
     const absences = await Absence.findAll({
       where: whereClause,
       include: [
-        { model: User, as: 'student' },
-        { model: Course, as: 'course' }
-      ],
-      order: [['fecha', 'DESC']]
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+      ]
     });
+
     res.json(absences);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Update absence (teachers only) - for adding observations or changing type
-router.patch('/:id', async (req, res) => {
+// Get absences by teacher (PROFESOR ve ausencias de sus cursos, ADMIN ve todas)
+router.get('/teacher', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
   try {
-    const { tipo, observaciones } = req.body;
-    const absence = await Absence.findByPk(req.params.id);
-
-    if (!absence) {
-      return res.status(404).json({ error: 'Absence not found' });
+    const { teacherId } = req.query;
+    
+    let whereClause = {};
+    
+    if (req.user.role === 'teacher') {
+      // Profesor solo ve ausencias que ÉL registró
+      whereClause.teacherId = req.user.id;
+    } else if (req.user.role === 'admin' && teacherId) {
+      // Admin puede filtrar por profesor
+      whereClause.teacherId = teacherId;
     }
 
-    // Sin verificación de autorización
+    const absences = await Absence.findAll({
+      where: whereClause,
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+      ]
+    });
 
-    await absence.update({
+    res.json(absences);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Create absence (SOLO PROFESORES pueden crear ausencias)
+router.post('/', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
+  try {
+    const { studentId, courseId, fecha, materia, motivo, tipo, observaciones } = req.body;
+
+    // Verificar que el curso exista
+    const course = await Course.findByPk(courseId);
+    if (!course) {
+      return res.status(404).json({ error: 'Curso no encontrado' });
+    }
+
+    // Si es profesor, verificar que sea SU curso
+    if (req.user.role === 'teacher' && course.teacherId !== req.user.id) {
+      return res.status(403).json({ 
+        error: 'No puedes crear ausencias en cursos que no enseñas' 
+      });
+    }
+
+    // Verificar que el estudiante exista
+    const student = await User.findOne({ 
+      where: { id: studentId, role: 'student' } 
+    });
+    if (!student) {
+      return res.status(404).json({ error: 'Estudiante no encontrado' });
+    }
+
+    const absence = await Absence.create({
+      studentId,
+      courseId,
+      teacherId: req.user.id, // El profesor que la crea
+      fecha,
+      materia,
+      motivo,
       tipo,
       observaciones
     });
 
-    res.json(absence);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Get absence by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const absence = await Absence.findByPk(req.params.id, {
+    const absenceWithDetails = await Absence.findByPk(absence.id, {
       include: [
-        { model: User, as: 'student' },
-        { model: User, as: 'teacher' },
-        { model: Course, as: 'course' }
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
       ]
     });
 
-    if (!absence) {
-      return res.status(404).json({ error: 'Absence not found' });
-    }
-
-    // Check if user has permission to view this absence
-    if (
-      false // Sin verificación de autorización
-    ) {
-      return res.status(403).json({ error: 'Not authorized to view this absence' });
-    }
-
-    res.json(absence);
+    res.status(201).json(absenceWithDetails);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Delete absence notification
-router.delete('/:id', async (req, res) => {
+// Delete absence (SOLO PROFESOR que la creó o ADMIN)
+router.delete('/:id', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
   try {
     const absence = await Absence.findByPk(req.params.id);
 
     if (!absence) {
-      return res.status(404).json({ error: 'Absence notification not found' });
+      return res.status(404).json({ error: 'Ausencia no encontrada' });
+    }
+
+    // Si es profesor, verificar que ÉL la creó
+    if (req.user.role === 'teacher' && absence.teacherId !== req.user.id) {
+      return res.status(403).json({ 
+        error: 'No puedes eliminar ausencias que no creaste' 
+      });
     }
 
     await absence.destroy();

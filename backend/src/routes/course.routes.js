@@ -1,10 +1,11 @@
 const express = require('express');
 const { Course, User } = require('../models');
+const { authenticateToken, authorizeRole } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// Create new course (sin autenticación)
-router.post('/', async (req, res) => {
+// Create new course (SOLO ADMINS)
+router.post('/', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
     const { name, code, description, schedule, classroom, teacherId } = req.body;
 
@@ -13,14 +14,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Course code already exists' });
     }
 
-    // Si no se proporciona teacherId, usar el primer profesor disponible
-    let finalTeacherId = teacherId;
-    if (!finalTeacherId) {
-      const firstTeacher = await User.findOne({ where: { role: 'teacher' } });
-      if (!firstTeacher) {
-        return res.status(400).json({ error: 'No teachers available. Create a teacher first.' });
-      }
-      finalTeacherId = firstTeacher.id;
+    // Verificar que el profesor existe
+    const teacher = await User.findOne({ 
+      where: { id: teacherId, role: 'teacher' } 
+    });
+    
+    if (!teacher) {
+      return res.status(400).json({ error: 'Teacher not found or invalid role' });
     }
 
     const course = await Course.create({
@@ -29,20 +29,29 @@ router.post('/', async (req, res) => {
       description,
       schedule,
       classroom,
-      teacherId: finalTeacherId
+      teacherId
     });
 
-    res.status(201).json(course);
+    // Retornar con información del profesor
+    const courseWithTeacher = await Course.findByPk(course.id, {
+      include: [{ model: User, as: 'teacher', attributes: ['id', 'name', 'email'] }]
+    });
+
+    res.status(201).json(courseWithTeacher);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Get all courses
-router.get('/', async (req, res) => {
+// Get all courses (AUTENTICADO)
+router.get('/', authenticateToken, async (req, res) => {
   try {
     const courses = await Course.findAll({
-      include: [{ model: User, as: 'teacher' }]
+      include: [{ 
+        model: User, 
+        as: 'teacher',
+        attributes: ['id', 'name', 'email', 'faculty']
+      }]
     });
     res.json(courses);
   } catch (error) {
@@ -50,11 +59,40 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get courses by teacher (sin autenticación)
-router.get('/teacher', async (req, res) => {
+// Get courses by teacher (PROFESORES ven sus cursos)
+router.get('/teacher/:teacherId', authenticateToken, async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    
+    // Verificar que el usuario es el profesor o es admin
+    if (req.user.role !== 'admin' && req.user.id !== parseInt(teacherId)) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    const courses = await Course.findAll({
+      where: { teacherId },
+      include: [{ 
+        model: User, 
+        as: 'teacher',
+        attributes: ['id', 'name', 'email', 'faculty']
+      }]
+    });
+    
+    res.json(courses);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get courses for student (ESTUDIANTES ven todos los cursos disponibles)
+router.get('/student', authenticateToken, authorizeRole('student'), async (req, res) => {
   try {
     const courses = await Course.findAll({
-      include: [{ model: User, as: 'teacher' }]
+      include: [{ 
+        model: User, 
+        as: 'teacher',
+        attributes: ['id', 'name', 'email', 'faculty']
+      }]
     });
     res.json(courses);
   } catch (error) {
@@ -62,23 +100,15 @@ router.get('/teacher', async (req, res) => {
   }
 });
 
-// Get courses for student (sin autenticación)
-router.get('/student', async (req, res) => {
-  try {
-    const courses = await Course.findAll({
-      include: [{ model: User, as: 'teacher' }]
-    });
-    res.json(courses);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Get course by ID
-router.get('/:id', async (req, res) => {
+// Get course by ID (AUTENTICADO)
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const course = await Course.findByPk(req.params.id, {
-      include: [{ model: User, as: 'teacher' }]
+      include: [{ 
+        model: User, 
+        as: 'teacher',
+        attributes: ['id', 'name', 'email', 'faculty']
+      }]
     });
 
     if (!course) {
@@ -91,8 +121,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Update course (sin autenticación)
-router.patch('/:id', async (req, res) => {
+// Update course (SOLO ADMINS)
+router.patch('/:id', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
     const course = await Course.findByPk(req.params.id);
 
@@ -100,32 +130,46 @@ router.patch('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    // Sin verificación de autorización
+    const { name, description, schedule, classroom, teacherId } = req.body;
+    
+    // Si se cambia el profesor, verificar que existe
+    if (teacherId && teacherId !== course.teacherId) {
+      const teacher = await User.findOne({ 
+        where: { id: teacherId, role: 'teacher' } 
+      });
+      
+      if (!teacher) {
+        return res.status(400).json({ error: 'Teacher not found or invalid role' });
+      }
+    }
 
-    const { name, description, schedule, classroom } = req.body;
     await course.update({
       name,
       description,
       schedule,
-      classroom
+      classroom,
+      teacherId
     });
 
-    res.json(course);
+    // Retornar con información actualizada
+    const updatedCourse = await Course.findByPk(course.id, {
+      include: [{ model: User, as: 'teacher', attributes: ['id', 'name', 'email'] }]
+    });
+
+    res.json(updatedCourse);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Delete course (sin autenticación)
-router.delete('/:id', async (req, res) => {
+// Delete course (SOLO ADMINS)
+router.delete('/:id', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
     const course = await Course.findByPk(req.params.id);
 
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
-
-    // Sin verificación de autorización
 
     await course.destroy();
     res.status(204).send();
@@ -134,4 +178,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

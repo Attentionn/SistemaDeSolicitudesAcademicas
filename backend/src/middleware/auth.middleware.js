@@ -1,39 +1,46 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 
-const auth = async (req, res, next) => {
+// Verificar token JWT
+const authenticateToken = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
     if (!token) {
-      throw new Error();
+      return res.status(401).json({ message: 'Token no proporcionado' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findOne({ where: { id: decoded.id } });
-
+    
+    const user = await User.findByPk(decoded.id);
+    
     if (!user) {
-      throw new Error();
+      return res.status(401).json({ message: 'Usuario no encontrado' });
     }
 
-    req.token = token;
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Please authenticate.' });
+    return res.status(403).json({ message: 'Token inválido o expirado' });
   }
 };
 
-const checkRole = (roles) => {
+// Verificar rol específico
+const authorizeRole = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied.' });
+    if (!req.user) {
+      return res.status(401).json({ message: 'No autenticado' });
     }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        message: 'No tienes permisos para acceder a este recurso' 
+      });
+    }
+
     next();
   };
 };
 
-module.exports = {
-  auth,
-  checkRole
-}; 
+module.exports = { authenticateToken, authorizeRole };

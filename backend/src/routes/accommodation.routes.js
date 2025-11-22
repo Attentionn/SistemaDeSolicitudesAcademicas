@@ -1,11 +1,11 @@
 const express = require('express');
-const { Accommodation, Course, User, Absence } = require('../models');
-// Sin autenticación
+const { Accommodation, Course, User } = require('../models');
+const { authenticateToken, authorizeRole } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// Create new accommodation request (sin autenticación)
-router.post('/', async (req, res) => {
+// Create new accommodation request (SOLO ESTUDIANTES)
+router.post('/', authenticateToken, authorizeRole('student'), async (req, res) => {
   try {
     const {
       type,
@@ -17,8 +17,7 @@ router.post('/', async (req, res) => {
       courseId,
       motivo,
       fechaOriginal,
-      fechaPropuesta,
-      studentId
+      fechaPropuesta
     } = req.body;
 
     const course = await Course.findByPk(courseId, {
@@ -27,10 +26,6 @@ router.post('/', async (req, res) => {
 
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
-    }
-
-    if (!studentId) {
-      return res.status(400).json({ error: 'Student ID is required' });
     }
 
     const accommodation = await Accommodation.create({
@@ -43,22 +38,36 @@ router.post('/', async (req, res) => {
       motivo,
       fechaOriginal,
       fechaPropuesta,
-      studentId: studentId, // Usar el studentId del request (requerido)
+      studentId: req.user.id, // ID del estudiante autenticado
       courseId,
       teacherId: course.teacher.id
     });
 
-    res.status(201).json(accommodation);
+    const accommodationWithDetails = await Accommodation.findByPk(accommodation.id, {
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+      ]
+    });
+
+    res.status(201).json(accommodationWithDetails);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Get all accommodations for a teacher with filtering
-router.get('/teacher', async (req, res) => {
+// Get all accommodations for a teacher (SOLO PROFESORES/ADMIN)
+router.get('/teacher', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
   try {
     const { type, status } = req.query;
-    const whereClause = {}; // Sin autenticación, devolver todas
+    const whereClause = {};
+    
+    // Profesor solo ve solicitudes de SUS cursos
+    if (req.user.role === 'teacher') {
+      whereClause.teacherId = req.user.id;
+    }
+    // Admin ve todas (whereClause vacío)
     
     if (type) {
       whereClause.type = type;
@@ -71,8 +80,8 @@ router.get('/teacher', async (req, res) => {
     const accommodations = await Accommodation.findAll({
       where: whereClause,
       include: [
-        { model: User, as: 'student' },
-        { model: Course, as: 'course' }
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -82,15 +91,18 @@ router.get('/teacher', async (req, res) => {
   }
 });
 
-// Get all accommodations for a student
-router.get('/student', async (req, res) => {
+// Get all accommodations for a student (SOLO ESTUDIANTES)
+router.get('/student', authenticateToken, authorizeRole('student'), async (req, res) => {
   try {
     const accommodations = await Accommodation.findAll({
-      where: {}, // Sin autenticación, devolver todas
+      where: {
+        studentId: req.user.id // Solo sus propias solicitudes
+      },
       include: [
-        { model: User, as: 'teacher' },
-        { model: Course, as: 'course' }
-      ]
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+      ],
+      order: [['createdAt', 'DESC']]
     });
     res.json(accommodations);
   } catch (error) {
@@ -98,37 +110,54 @@ router.get('/student', async (req, res) => {
   }
 });
 
-// Update accommodation status (teachers only)
-router.patch('/:id', async (req, res) => {
+// Update accommodation status (SOLO PROFESORES que enseñan el curso o ADMIN)
+router.patch('/:id', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
   try {
     const { status, teacherResponse } = req.body;
-    const accommodation = await Accommodation.findByPk(req.params.id);
+    const accommodation = await Accommodation.findByPk(req.params.id, {
+      include: [{ model: Course, as: 'course' }]
+    });
 
     if (!accommodation) {
       return res.status(404).json({ error: 'Accommodation request not found' });
     }
 
-    // Sin verificación de autorización
+    // Verificar que el profesor enseña ese curso
+    if (req.user.role === 'teacher' && accommodation.teacherId !== req.user.id) {
+      return res.status(403).json({ 
+        error: 'No puedes modificar solicitudes de cursos que no enseñas' 
+      });
+    }
 
     await accommodation.update({
       status,
-      teacherResponse
+      teacherResponse,
+      reviewedBy: req.user.id,
+      reviewedAt: new Date()
     });
 
-    res.json(accommodation);
+    const updatedAccommodation = await Accommodation.findByPk(accommodation.id, {
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+      ]
+    });
+
+    res.json(updatedAccommodation);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Get accommodation by ID
-router.get('/:id', async (req, res) => {
+// Get accommodation by ID (AUTENTICADO)
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const accommodation = await Accommodation.findByPk(req.params.id, {
       include: [
-        { model: User, as: 'student' },
-        { model: User, as: 'teacher' },
-        { model: Course, as: 'course' }
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
       ]
     });
 
@@ -136,10 +165,12 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Accommodation request not found' });
     }
 
-    // Check if user has permission to view this accommodation
-    if (
-      false // Sin verificación de autorización
-    ) {
+    // Verificar permisos
+    const isStudent = req.user.role === 'student' && accommodation.studentId === req.user.id;
+    const isTeacher = req.user.role === 'teacher' && accommodation.teacherId === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isStudent && !isTeacher && !isAdmin) {
       return res.status(403).json({ error: 'Not authorized to view this request' });
     }
 
@@ -149,13 +180,24 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Delete accommodation request
-router.delete('/:id', async (req, res) => {
+// Delete accommodation request (ESTUDIANTE dueño, PROFESOR del curso, o ADMIN)
+router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const accommodation = await Accommodation.findByPk(req.params.id);
 
     if (!accommodation) {
       return res.status(404).json({ error: 'Accommodation request not found' });
+    }
+
+    // Verificar permisos
+    const isOwner = req.user.role === 'student' && accommodation.studentId === req.user.id;
+    const isTeacher = req.user.role === 'teacher' && accommodation.teacherId === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isTeacher && !isAdmin) {
+      return res.status(403).json({ 
+        error: 'No tienes permiso para eliminar esta solicitud' 
+      });
     }
 
     await accommodation.destroy();
@@ -165,4 +207,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

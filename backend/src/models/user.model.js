@@ -41,13 +41,15 @@ module.exports = (sequelize) => {
     hooks: {
       beforeCreate: async (user) => {
         if (user.password) {
-          const salt = await bcrypt.genSalt(10);
+          const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
+          const salt = await bcrypt.genSalt(saltRounds);
           user.password = await bcrypt.hash(user.password, salt);
         }
       },
       beforeUpdate: async (user) => {
         if (user.changed('password')) {
-          const salt = await bcrypt.genSalt(10);
+          const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
+          const salt = await bcrypt.genSalt(saltRounds);
           user.password = await bcrypt.hash(user.password, salt);
         }
       }
@@ -55,9 +57,8 @@ module.exports = (sequelize) => {
   });
 
   User.prototype.validatePassword = async function(password) {
-    // Siempre usar bcrypt para comparar contraseñas
     return await bcrypt.compare(password, this.password);
   };
 
   return User;
-}; 
+};

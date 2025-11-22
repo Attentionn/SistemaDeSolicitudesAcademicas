@@ -1,324 +1,234 @@
 const express = require('express');
-const { Absence, Accommodation, Course, User } = require('../models');
-// Sin autenticación
+const { Accommodation, Absence, User, Course } = require('../models');
+const { authenticateToken, authorizeRole } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// Get all requests for admins (all requests in the system)
-router.get('/admin', async (req, res) => {
+// Admin Dashboard (SOLO ADMINS)
+router.get('/admin/dashboard', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
-    const { status, type } = req.query;
+    const pendingAccommodations = await Accommodation.count({ where: { status: 'pending' } });
+    const approvedAccommodations = await Accommodation.count({ where: { status: 'approved' } });
+    const rejectedAccommodations = await Accommodation.count({ where: { status: 'rejected' } });
     
-    // Get all absences
-    const absenceWhere = {};
-    if (status) {
-      absenceWhere.status = status;
-    }
-    
-    const absences = await Absence.findAll({
-      where: absenceWhere,
-      include: [
-        { model: User, as: 'student' },
-        { model: User, as: 'teacher' },
-        { model: Course, as: 'course' }
-      ],
-      order: [['createdAt', 'DESC']]
+    const totalAbsences = await Absence.count();
+    const totalStudents = await User.count({ where: { role: 'student' } });
+    const totalTeachers = await User.count({ where: { role: 'teacher' } });
+    const totalCourses = await Course.count();
+
+    res.json({
+      accommodations: {
+        pending: pendingAccommodations,
+        approved: approvedAccommodations,
+        rejected: rejectedAccommodations,
+        total: pendingAccommodations + approvedAccommodations + rejectedAccommodations
+      },
+      absences: totalAbsences,
+      users: {
+        students: totalStudents,
+        teachers: totalTeachers,
+        total: totalStudents + totalTeachers
+      },
+      courses: totalCourses
     });
-
-    // Get all accommodations
-    const accommodationWhere = {};
-    if (status) {
-      accommodationWhere.status = status;
-    }
-    if (type) {
-      accommodationWhere.type = type;
-    }
-    
-    const accommodations = await Accommodation.findAll({
-      where: accommodationWhere,
-      include: [
-        { model: User, as: 'student' },
-        { model: User, as: 'teacher' },
-        { model: Course, as: 'course' }
-      ],
-      order: [['createdAt', 'DESC']]
-    });
-
-    // Transform data to unified format
-    const allRequests = [
-      ...absences.map(absence => ({
-        id: absence.id,
-        type: 'absence',
-        student: absence.student,
-        teacher: absence.teacher,
-        course: absence.course,
-        status: absence.status || 'pending',
-        motivo: absence.motivo,
-        createdAt: absence.createdAt,
-        updatedAt: absence.updatedAt,
-        teacherComment: absence.observaciones,
-        // Absence specific fields
-        fecha: absence.fecha,
-        materia: absence.materia,
-        tipo: absence.tipo
-      })),
-      ...accommodations.map(accommodation => ({
-        id: accommodation.id,
-        type: 'accommodation',
-        student: accommodation.student,
-        teacher: accommodation.teacher,
-        course: accommodation.course,
-        status: accommodation.status || 'pending',
-        motivo: accommodation.motivo,
-        description: accommodation.description,
-        createdAt: accommodation.createdAt,
-        updatedAt: accommodation.updatedAt,
-        teacherComment: accommodation.teacherResponse,
-        // Accommodation specific fields
-        requestedDate: accommodation.requestedDate,
-        newDate: accommodation.newDate,
-        newClassroom: accommodation.newClassroom,
-        extensionDays: accommodation.extensionDays
-      }))
-    ];
-
-    // Sort by creation date
-    allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    res.json(allRequests);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Get all requests for a teacher (both absences and accommodations)
-router.get('/teacher', async (req, res) => {
+// Teacher Dashboard (SOLO PROFESORES)
+router.get('/teacher/dashboard', authenticateToken, authorizeRole('teacher'), async (req, res) => {
   try {
-    const { status, type } = req.query;
-    
-    // Get absences (sin autenticación, devolver todas)
-    const absenceWhere = {};
-    if (status) {
-      absenceWhere.status = status;
-    }
-    
-    const absences = await Absence.findAll({
-      where: absenceWhere,
-      include: [
-        { model: User, as: 'student' },
-        { model: Course, as: 'course' }
-      ],
-      order: [['createdAt', 'DESC']]
+    // Obtener cursos del profesor
+    const teacherCourses = await Course.findAll({
+      where: { teacherId: req.user.id },
+      attributes: ['id']
     });
+    const courseIds = teacherCourses.map(c => c.id);
 
-    // Get accommodations (sin autenticación, devolver todas)
-    const accommodationWhere = {};
-    if (status) {
-      accommodationWhere.status = status;
-    }
-    if (type) {
-      accommodationWhere.type = type;
-    }
-    
-    const accommodations = await Accommodation.findAll({
-      where: accommodationWhere,
-      include: [
-        { model: User, as: 'student' },
-        { model: Course, as: 'course' }
-      ],
-      order: [['createdAt', 'DESC']]
+    const pendingAccommodations = await Accommodation.count({ 
+      where: { 
+        status: 'pending',
+        courseId: courseIds 
+      } 
     });
-
-    // Transform data to unified format
-    const allRequests = [
-      ...absences.map(absence => ({
-        id: absence.id,
-        type: 'absence',
-        student: absence.student,
-        course: absence.course,
-        status: absence.status || 'pending',
-        motivo: absence.motivo,
-        createdAt: absence.createdAt,
-        updatedAt: absence.updatedAt,
-        teacherComment: absence.observaciones,
-        // Absence specific fields
-        fecha: absence.fecha,
-        materia: absence.materia,
-        tipo: absence.tipo
-      })),
-      ...accommodations.map(accommodation => ({
-        id: accommodation.id,
-        type: 'accommodation',
-        student: accommodation.student,
-        course: accommodation.course,
-        status: accommodation.status || 'pending',
-        motivo: accommodation.motivo,
-        description: accommodation.description,
-        createdAt: accommodation.createdAt,
-        updatedAt: accommodation.updatedAt,
-        teacherComment: accommodation.teacherResponse,
-        // Accommodation specific fields
-        requestedDate: accommodation.requestedDate,
-        newDate: accommodation.newDate,
-        newClassroom: accommodation.newClassroom,
-        extensionDays: accommodation.extensionDays
-      }))
-    ];
-
-    // Sort by creation date
-    allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    res.json(allRequests);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Approve a request (works for both absences and accommodations)
-router.patch('/:id/approve', async (req, res) => {
-  try {
-    const { teacherComment } = req.body;
-    const { id } = req.params;
     
-    // Try to find in accommodations first
-    let request = await Accommodation.findByPk(id);
-    let isAccommodation = true;
-    
-    if (!request) {
-      // Try to find in absences
-      request = await Absence.findByPk(id);
-      isAccommodation = false;
-    }
-    
-    if (!request) {
-      return res.status(404).json({ error: 'Request not found' });
-    }
-
-    // Sin verificación de autorización
-
-    // Update based on type
-    if (isAccommodation) {
-      await request.update({
+    const approvedAccommodations = await Accommodation.count({ 
+      where: { 
         status: 'approved',
-        teacherResponse: teacherComment
-      });
-    } else {
-      await request.update({
-        status: 'approved',
-        observaciones: teacherComment
-      });
-    }
+        courseId: courseIds 
+      } 
+    });
+    
+    const rejectedAccommodations = await Accommodation.count({ 
+      where: { 
+        status: 'rejected',
+        courseId: courseIds 
+      } 
+    });
 
-    res.json({ message: 'Request approved successfully', request });
+    const totalAbsences = await Absence.count({ 
+      where: { courseId: courseIds } 
+    });
+
+    res.json({
+      accommodations: {
+        pending: pendingAccommodations,
+        approved: approvedAccommodations,
+        rejected: rejectedAccommodations,
+        total: pendingAccommodations + approvedAccommodations + rejectedAccommodations
+      },
+      absences: totalAbsences,
+      courses: teacherCourses.length
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Reject a request (works for both absences and accommodations)
-router.patch('/:id/reject', async (req, res) => {
+// Student Dashboard (SOLO ESTUDIANTES)
+router.get('/student/dashboard', authenticateToken, authorizeRole('student'), async (req, res) => {
   try {
-    const { teacherComment } = req.body;
-    const { id } = req.params;
+    const pendingAccommodations = await Accommodation.count({ 
+      where: { 
+        studentId: req.user.id,
+        status: 'pending' 
+      } 
+    });
     
-    // Try to find in accommodations first
-    let request = await Accommodation.findByPk(id);
-    let isAccommodation = true;
+    const approvedAccommodations = await Accommodation.count({ 
+      where: { 
+        studentId: req.user.id,
+        status: 'approved' 
+      } 
+    });
     
-    if (!request) {
-      // Try to find in absences
-      request = await Absence.findByPk(id);
-      isAccommodation = false;
-    }
-    
-    if (!request) {
-      return res.status(404).json({ error: 'Request not found' });
-    }
+    const rejectedAccommodations = await Accommodation.count({ 
+      where: { 
+        studentId: req.user.id,
+        status: 'rejected' 
+      } 
+    });
 
-    // Sin verificación de autorización
+    const totalAbsences = await Absence.count({ 
+      where: { studentId: req.user.id } 
+    });
 
-    // Update based on type
-    if (isAccommodation) {
-      await request.update({
-        status: 'rejected',
-        teacherResponse: teacherComment
-      });
-    } else {
-      await request.update({
-        status: 'rejected',
-        observaciones: teacherComment
-      });
-    }
-
-    res.json({ message: 'Request rejected successfully', request });
+    res.json({
+      accommodations: {
+        pending: pendingAccommodations,
+        approved: approvedAccommodations,
+        rejected: rejectedAccommodations,
+        total: pendingAccommodations + approvedAccommodations + rejectedAccommodations
+      },
+      absences: totalAbsences
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Get all requests for a student
-router.get('/student', async (req, res) => {
+// Get all pending requests (ADMIN ve todas, TEACHER ve de sus cursos)
+router.get('/pending', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
   try {
-    // Get absences (sin autenticación, devolver todas)
-    const absences = await Absence.findAll({
-      where: {},
+    let whereClause = { status: 'pending' };
+
+    if (req.user.role === 'teacher') {
+      const teacherCourses = await Course.findAll({
+        where: { teacherId: req.user.id },
+        attributes: ['id']
+      });
+      const courseIds = teacherCourses.map(c => c.id);
+      whereClause.courseId = courseIds;
+    }
+
+    const pendingRequests = await Accommodation.findAll({
+      where: whereClause,
       include: [
-        { model: User, as: 'teacher' },
-        { model: Course, as: 'course' }
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
       ],
       order: [['createdAt', 'DESC']]
     });
 
-    // Get accommodations (sin autenticación, devolver todas)
-    const accommodations = await Accommodation.findAll({
-      where: {},
-      include: [
-        { model: User, as: 'teacher' },
-        { model: Course, as: 'course' }
-      ],
-      order: [['createdAt', 'DESC']]
+    res.json(pendingRequests);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Approve request (SOLO PROFESOR del curso o ADMIN)
+router.patch('/:id/approve', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
+  try {
+    const accommodation = await Accommodation.findByPk(req.params.id, {
+      include: [{ model: Course, as: 'course' }]
     });
 
-    // Transform data to unified format
-    const allRequests = [
-      ...absences.map(absence => ({
-        id: absence.id,
-        type: 'absence',
-        teacher: absence.teacher,
-        course: absence.course,
-        status: absence.status || 'pending',
-        motivo: absence.motivo,
-        createdAt: absence.createdAt,
-        updatedAt: absence.updatedAt,
-        teacherComment: absence.observaciones,
-        // Absence specific fields
-        fecha: absence.fecha,
-        materia: absence.materia,
-        tipo: absence.tipo
-      })),
-      ...accommodations.map(accommodation => ({
-        id: accommodation.id,
-        type: 'accommodation',
-        teacher: accommodation.teacher,
-        course: accommodation.course,
-        status: accommodation.status || 'pending',
-        motivo: accommodation.motivo,
-        description: accommodation.description,
-        createdAt: accommodation.createdAt,
-        updatedAt: accommodation.updatedAt,
-        teacherComment: accommodation.teacherResponse,
-        // Accommodation specific fields
-        requestedDate: accommodation.requestedDate,
-        newDate: accommodation.newDate,
-        newClassroom: accommodation.newClassroom,
-        extensionDays: accommodation.extensionDays
-      }))
-    ];
+    if (!accommodation) {
+      return res.status(404).json({ error: 'Solicitud no encontrada' });
+    }
 
-    // Sort by creation date
-    allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Si es profesor, verificar que sea SU curso
+    if (req.user.role === 'teacher' && accommodation.course.teacherId !== req.user.id) {
+      return res.status(403).json({ 
+        error: 'No puedes aprobar solicitudes de cursos que no enseñas' 
+      });
+    }
 
-    res.json(allRequests);
+    await accommodation.update({ 
+      status: 'approved',
+      reviewedBy: req.user.id,
+      reviewedAt: new Date()
+    });
+
+    const updatedAccommodation = await Accommodation.findByPk(accommodation.id, {
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+      ]
+    });
+
+    res.json(updatedAccommodation);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Reject request (SOLO PROFESOR del curso o ADMIN)
+router.patch('/:id/reject', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const accommodation = await Accommodation.findByPk(req.params.id, {
+      include: [{ model: Course, as: 'course' }]
+    });
+
+    if (!accommodation) {
+      return res.status(404).json({ error: 'Solicitud no encontrada' });
+    }
+
+    // Si es profesor, verificar que sea SU curso
+    if (req.user.role === 'teacher' && accommodation.course.teacherId !== req.user.id) {
+      return res.status(403).json({ 
+        error: 'No puedes rechazar solicitudes de cursos que no enseñas' 
+      });
+    }
+
+    await accommodation.update({ 
+      status: 'rejected',
+      rejectionReason: reason,
+      reviewedBy: req.user.id,
+      reviewedAt: new Date()
+    });
+
+    const updatedAccommodation = await Accommodation.findByPk(accommodation.id, {
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+      ]
+    });
+
+    res.json(updatedAccommodation);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
