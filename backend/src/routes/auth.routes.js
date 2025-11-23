@@ -60,19 +60,10 @@ router.post('/register', authenticateToken, authorizeRole('admin'), async (req, 
 
 // Login user
 router.post('/login', async (req, res) => {
-  console.log('📩 Body completo:', req.body);
-  console.log('📧 Email:', req.body.email);
-  console.log('🔑 Password:', req.body.password);
-  
   try {
     const { email, password } = req.body;
     
-    console.log('🔍 Buscando usuario con email:', email); // ← NUEVO
-    console.log('📊 User model:', User); // ← NUEVO
-    
     const user = await User.findOne({ where: { email } });
-    
-    console.log('👤 Usuario encontrado:', user); // ← NUEVO
     
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -97,7 +88,63 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.log('❌ Error completo:', error); // ← NUEVO
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update user (SOLO ADMIN)
+router.put('/:id', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  try {
+    const { name, email, password, role, studentId, faculty } = req.body;
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if email is already in use
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+    }
+
+    // Update user details
+    await user.update({
+      name,
+      email,
+      password,
+      role,
+      studentId,
+      faculty
+    });
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      studentId: user.studentId,
+      faculty: user.faculty
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete user (SOLO ADMIN)
+router.delete('/:id', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await user.destroy();
+    res.status(204).send();
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });

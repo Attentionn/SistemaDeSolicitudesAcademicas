@@ -38,9 +38,9 @@ router.post('/', authenticateToken, authorizeRole('student'), async (req, res) =
       motivo,
       fechaOriginal,
       fechaPropuesta,
-      studentId: req.user.id, // ID del estudiante autenticado
+      studentId: req.user.id,
       courseId,
-      teacherId: course.teacher.id
+      teacherId: course.teacherId
     });
 
     const accommodationWithDetails = await Accommodation.findByPk(accommodation.id, {
@@ -63,11 +63,9 @@ router.get('/teacher', authenticateToken, authorizeRole('teacher', 'admin'), asy
     const { type, status } = req.query;
     const whereClause = {};
     
-    // Profesor solo ve solicitudes de SUS cursos
     if (req.user.role === 'teacher') {
       whereClause.teacherId = req.user.id;
     }
-    // Admin ve todas (whereClause vacío)
     
     if (type) {
       whereClause.type = type;
@@ -96,7 +94,7 @@ router.get('/student', authenticateToken, authorizeRole('student'), async (req, 
   try {
     const accommodations = await Accommodation.findAll({
       where: {
-        studentId: req.user.id // Solo sus propias solicitudes
+        studentId: req.user.id
       },
       include: [
         { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
@@ -114,15 +112,12 @@ router.get('/student', authenticateToken, authorizeRole('student'), async (req, 
 router.patch('/:id', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
   try {
     const { status, teacherResponse } = req.body;
-    const accommodation = await Accommodation.findByPk(req.params.id, {
-      include: [{ model: Course, as: 'course' }]
-    });
+    const accommodation = await Accommodation.findByPk(req.params.id);
 
     if (!accommodation) {
       return res.status(404).json({ error: 'Accommodation request not found' });
     }
 
-    // Verificar que el profesor enseña ese curso
     if (req.user.role === 'teacher' && accommodation.teacherId !== req.user.id) {
       return res.status(403).json({ 
         error: 'No puedes modificar solicitudes de cursos que no enseñas' 
@@ -131,9 +126,7 @@ router.patch('/:id', authenticateToken, authorizeRole('teacher', 'admin'), async
 
     await accommodation.update({
       status,
-      teacherResponse,
-      reviewedBy: req.user.id,
-      reviewedAt: new Date()
+      teacherResponse
     });
 
     const updatedAccommodation = await Accommodation.findByPk(accommodation.id, {
@@ -165,7 +158,6 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Accommodation request not found' });
     }
 
-    // Verificar permisos
     const isStudent = req.user.role === 'student' && accommodation.studentId === req.user.id;
     const isTeacher = req.user.role === 'teacher' && accommodation.teacherId === req.user.id;
     const isAdmin = req.user.role === 'admin';
@@ -189,7 +181,6 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Accommodation request not found' });
     }
 
-    // Verificar permisos
     const isOwner = req.user.role === 'student' && accommodation.studentId === req.user.id;
     const isTeacher = req.user.role === 'teacher' && accommodation.teacherId === req.user.id;
     const isAdmin = req.user.role === 'admin';

@@ -4,12 +4,25 @@ const Course = require('./course.model')(sequelize);
 const Accommodation = require('./accommodation.model')(sequelize);
 const Absence = require('./absence.model')(sequelize);
 const Faculty = require('./faculty.model')(sequelize);
+const Enrollment = require('./enrollment.model')(sequelize);
 
 // Define relationships
 
 // User - Course (Teacher)
 User.hasMany(Course, { foreignKey: 'teacherId', as: 'courses' });
 Course.belongsTo(User, { foreignKey: 'teacherId', as: 'teacher' });
+
+// User - Course (Students) - Muchos a Muchos
+User.belongsToMany(Course, { 
+  through: Enrollment, 
+  foreignKey: 'studentId', 
+  as: 'enrolledCourses' 
+});
+Course.belongsToMany(User, { 
+  through: Enrollment, 
+  foreignKey: 'courseId', 
+  as: 'students' 
+});
 
 // User - Accommodation (Student)
 User.hasMany(Accommodation, { foreignKey: 'studentId', as: 'studentAccommodations' });
@@ -24,11 +37,11 @@ User.hasMany(Absence, { foreignKey: 'studentId', as: 'absences' });
 Absence.belongsTo(User, { foreignKey: 'studentId', as: 'student' });
 
 // User - Absence (Teacher)
-User.hasMany(Absence, { foreignKey: 'teacherId', as: 'teacherAbsences' });
+User.hasMany(Absence, { foreignKey: 'teacherId', as: 'recordedAbsences' });
 Absence.belongsTo(User, { foreignKey: 'teacherId', as: 'teacher' });
 
 // Course - Absence
-Course.hasMany(Absence, { foreignKey: 'courseId', as: 'courseAbsences' });
+Course.hasMany(Absence, { foreignKey: 'courseId', as: 'absences' });
 Absence.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
 
 module.exports = {
@@ -37,5 +50,6 @@ module.exports = {
   Course,
   Accommodation,
   Absence,
-  Faculty
+  Faculty,
+  Enrollment
 };

@@ -16,7 +16,6 @@ Este sistema permite gestionar las acomodaciones y solicitudes especiales para e
 
 ### Frontend
 - React.js
-- Tailwind CSS
 - React Router
 - Axios
 
@@ -33,34 +32,44 @@ Este sistema permite gestionar las acomodaciones y solicitudes especiales para e
 - Node.js (v14 o superior)
 - npm o yarn
 
-### Instalación
+# Sistema de Solicitudes Académicas - Backend
+
+## 🚀 Instalación
 
 1. Clonar el repositorio
-2. Instalar dependencias del backend:
+2. Instalar dependencias:
 ```bash
-cd backend
 npm install
 ```
 
-3. Instalar dependencias del frontend:
+3. Crear archivo `.env` basado en `.env.example`:
 ```bash
-cd frontend
-npm install
+cp .env.example .env
 ```
 
-4. Configurar variables de entorno:
-- Crear archivo `.env` en la carpeta backend basado en `.env.example`
+4. Configurar variables de entorno en `.env`:
+   - `DB_*`: Configuración de base de datos
+   - `JWT_SECRET`: Generar uno nuevo con:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
 
-### Ejecución
-
-1. Iniciar el backend:
+5. Crear base de datos y admin:
 ```bash
-cd backend
+node seedDatabase.js
+```
+
+6. Iniciar servidor:
+```bash
 npm start
 ```
 
-2. Iniciar el frontend:
-```bash
-cd frontend
-npm start
-```
+## 🔑 Credenciales por defecto
+
+**Admin:**
+- Email: `admin@ucol.mx`
+- Password: `Admin123!`
+
+## 📚 Documentación API
+
+Ver archivo `API.md` para endpoints disponibles.

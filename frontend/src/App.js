@@ -9,6 +9,7 @@ import SolicitudesPage from './pages/SolicitudesPage';
 import AbsenceManagement from './pages/AbsenceManagement';
 import AdminPanel from './pages/AdminPanel';
 import StudentRequests from './pages/StudentRequests';
+import EnrollmentManagement from './pages/EnrollmentManagement';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -76,6 +77,14 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/inscripciones"
+            element={
+              <PrivateRoute>
+                <EnrollmentManagement />
+              </PrivateRoute>
+            }
+          />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </AuthProvider>
@@ -83,4 +92,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

@@ -21,15 +21,20 @@ export default function Navbar() {
       { name: 'Solicitudes', href: '/solicitudes' },
       { name: 'Faltas', href: '/faltas' },
     ];
-    
+
     if (user?.role === 'student') {
       baseItems.push({ name: 'Mis Solicitudes', href: '/mis-solicitudes' });
     }
-    
+
     if (user?.role === 'admin') {
       baseItems.push({ name: 'Administración', href: '/dashboard' });
+      baseItems.push({ name: 'Inscripciones', href: '/inscripciones' });
     }
-    
+
+    if (user?.role === 'teacher') {
+      baseItems.push({ name: 'Inscripciones', href: '/inscripciones' });
+    }
+
     return baseItems;
   };
 
@@ -180,4 +185,4 @@ export default function Navbar() {
       )}
     </Disclosure>
   );
-} 
+}
