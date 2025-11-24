@@ -59,7 +59,25 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// Get courses by teacher (PROFESORES ven sus cursos)
+// Get courses for teacher (shorthand: usa el ID del usuario autenticado)
+router.get('/teacher', authenticateToken, async (req, res) => {
+  try {
+    const courses = await Course.findAll({
+      where: { teacherId: req.user.id },
+      include: [{ 
+        model: User, 
+        as: 'teacher',
+        attributes: ['id', 'name', 'email', 'faculty']
+      }]
+    });
+    
+    res.json(courses);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get courses by teacher ID (ruta con parámetro)
 router.get('/teacher/:teacherId', authenticateToken, async (req, res) => {
   try {
     const { teacherId } = req.params;

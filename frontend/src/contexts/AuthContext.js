@@ -16,9 +16,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Sin autenticación, solo cargar usuario del localStorage
+    // Cargar usuario y token del localStorage
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    const savedToken = localStorage.getItem('token');
+    if (savedUser && savedToken) {
       setUser(JSON.parse(savedUser));
     }
     setLoading(false);
@@ -29,7 +30,8 @@ export const AuthProvider = ({ children }) => {
       email,
       password
     });
-    const { user } = response.data;
+    const { token, user } = response.data;
+    localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
     return user;
@@ -37,13 +39,15 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     const response = await axios.post('http://localhost:5000/api/auth/register', userData);
-    const { user } = response.data;
+    const { token, user } = response.data;
+    localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
     return user;
   };
 
   const logout = () => {
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
   };

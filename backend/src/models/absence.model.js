@@ -11,10 +11,6 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: false
     },
-    materia: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
     motivo: {
       type: DataTypes.TEXT,
       allowNull: true

@@ -4,6 +4,39 @@ const { authenticateToken, authorizeRole } = require('../middleware/auth.middlew
 
 const router = express.Router();
 
+// Get all pending requests (endpoint para AdminDashboard)
+router.get('/admin', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  try {
+    const accommodations = await Accommodation.findAll({
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId', 'faculty'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    const absences = await Absence.findAll({
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId', 'faculty'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Combinar y retornar con tipo identificador
+    const allRequests = [
+      ...accommodations.map(a => ({ ...a.toJSON(), type: 'accommodation' })),
+      ...absences.map(a => ({ ...a.toJSON(), type: 'absence' }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json(allRequests);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Admin Dashboard (SOLO ADMINS)
 router.get('/admin/dashboard', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
@@ -123,6 +156,85 @@ router.get('/student/dashboard', authenticateToken, authorizeRole('student'), as
       },
       absences: totalAbsences
     });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get student's requests (ESTUDIANTES ven sus solicitudes de acomodación + ausencias)
+router.get('/student', authenticateToken, authorizeRole('student'), async (req, res) => {
+  try {
+    const accommodations = await Accommodation.findAll({
+      where: { studentId: req.user.id },
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    const absences = await Absence.findAll({
+      where: { studentId: req.user.id },
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Combinar y retornar con tipo identificador
+    const allRequests = [
+      ...accommodations.map(a => ({ ...a.toJSON(), type: 'accommodation' })),
+      ...absences.map(a => ({ ...a.toJSON(), type: 'absence' }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json(allRequests);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get teacher's requests (PROFESORES ven solicitudes de acomodación de sus cursos + ausencias)
+router.get('/teacher', authenticateToken, authorizeRole('teacher'), async (req, res) => {
+  try {
+    // Obtener cursos del profesor
+    const teacherCourses = await Course.findAll({
+      where: { teacherId: req.user.id },
+      attributes: ['id']
+    });
+    const courseIds = teacherCourses.map(c => c.id);
+
+    // Acomodaciones de sus cursos
+    const accommodations = await Accommodation.findAll({
+      where: { courseId: courseIds },
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Ausencias de sus cursos
+    const absences = await Absence.findAll({
+      where: { courseId: courseIds },
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Combinar y retornar con tipo identificador
+    const allRequests = [
+      ...accommodations.map(a => ({ ...a.toJSON(), type: 'accommodation' })),
+      ...absences.map(a => ({ ...a.toJSON(), type: 'absence' }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json(allRequests);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

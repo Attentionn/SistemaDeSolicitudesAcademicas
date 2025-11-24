@@ -66,10 +66,15 @@ router.get('/teacher', authenticateToken, authorizeRole('teacher', 'admin'), asy
   }
 });
 
-// Create absence (SOLO PROFESORES pueden crear ausencias)
-router.post('/', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
+// Create absence (ESTUDIANTES pueden avisar faltas futuras, PROFESORES registran faltas después)
+router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { studentId, courseId, fecha, materia, motivo, tipo, observaciones } = req.body;
+    const { studentId, courseId, fecha, motivo, tipo } = req.body;
+
+    // Validar que courseId esté presente
+    if (!courseId) {
+      return res.status(400).json({ error: 'courseId es requerido' });
+    }
 
     // Verificar que el curso exista
     const course = await Course.findByPk(courseId);
@@ -77,33 +82,74 @@ router.post('/', authenticateToken, authorizeRole('teacher', 'admin'), async (re
       return res.status(404).json({ error: 'Curso no encontrado' });
     }
 
-    // Si es profesor, verificar que sea SU curso
-    if (req.user.role === 'teacher' && course.teacherId !== req.user.id) {
-      return res.status(403).json({ 
-        error: 'No puedes crear ausencias en cursos que no enseñas' 
+    // Si es estudiante, crear aviso de falta futura (tipo 'prevista')
+    if (req.user.role === 'student') {
+      const absence = await Absence.create({
+        studentId: req.user.id,
+        courseId,
+        fecha,
+        motivo: motivo || '',
+        tipo: 'prevista',
+        teacherId: course.teacherId
       });
+
+      const absenceWithDetails = await Absence.findByPk(absence.id, {
+        include: [
+          { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+          { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+          { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+        ]
+      });
+
+      return res.status(201).json(absenceWithDetails);
     }
 
-    // Verificar que el estudiante exista
-    const student = await User.findOne({ 
-      where: { id: studentId, role: 'student' } 
-    });
-    if (!student) {
-      return res.status(404).json({ error: 'Estudiante no encontrado' });
+    // Si es profesor o admin, registrar falta después (tipo 'justificada' o 'injustificada')
+    if (req.user.role === 'teacher' || req.user.role === 'admin') {
+      if (!studentId) {
+        return res.status(400).json({ error: 'studentId es requerido para registrar faltas' });
+      }
+
+      // Verificar que el estudiante exista
+      const student = await User.findOne({ 
+        where: { id: studentId, role: 'student' } 
+      });
+      if (!student) {
+        return res.status(404).json({ error: 'Estudiante no encontrado' });
+      }
+
+      const absence = await Absence.create({
+        studentId,
+        courseId,
+        fecha,
+        motivo: motivo || '',
+        tipo: tipo || 'injustificada',
+        teacherId: req.user.id
+      });
+
+      const absenceWithDetails = await Absence.findByPk(absence.id, {
+        include: [
+          { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+          { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+          { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+        ]
+      });
+
+      return res.status(201).json(absenceWithDetails);
     }
 
-    const absence = await Absence.create({
-      studentId,
-      courseId,
-      teacherId: req.user.id, // El profesor que la crea
-      fecha,
-      materia,
-      motivo,
-      tipo,
-      observaciones
-    });
+    res.status(403).json({ error: 'No tienes permisos para registrar ausencias' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
 
-    const absenceWithDetails = await Absence.findByPk(absence.id, {
+// Update absence status (SOLO PROFESOR que registró la falta)
+router.patch('/:id', authenticateToken, authorizeRole('teacher', 'admin'), async (req, res) => {
+  try {
+    const { tipo, observaciones } = req.body; // 'justificada' o 'injustificada'
+
+    const absence = await Absence.findByPk(req.params.id, {
       include: [
         { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
         { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
@@ -111,7 +157,39 @@ router.post('/', authenticateToken, authorizeRole('teacher', 'admin'), async (re
       ]
     });
 
-    res.status(201).json(absenceWithDetails);
+    if (!absence) {
+      return res.status(404).json({ error: 'Ausencia no encontrada' });
+    }
+
+    // Si es profesor, verificar que sea de uno de sus cursos
+    if (req.user.role === 'teacher') {
+      const course = await Course.findByPk(absence.courseId);
+      if (course.teacherId !== req.user.id) {
+        return res.status(403).json({ 
+          error: 'No puedes actualizar ausencias de cursos que no enseñas' 
+        });
+      }
+    }
+
+    const updateData = {};
+    if (tipo && ['justificada', 'injustificada', 'prevista'].includes(tipo)) {
+      updateData.tipo = tipo;
+    }
+    if (observaciones) {
+      updateData.observaciones = observaciones;
+    }
+
+    await absence.update(updateData);
+
+    const updatedAbsence = await Absence.findByPk(req.params.id, {
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'studentId'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+        { model: Course, as: 'course', attributes: ['id', 'name', 'code'] }
+      ]
+    });
+
+    res.json(updatedAbsence);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { courseAPI, enrollmentAPI, userAPI } from '../services/api';
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:5000/api';
+
+// Helper para agregar token a las solicitudes
+const getAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export default function EnrollmentManagement() {
     const { user } = useAuth();
@@ -15,26 +23,9 @@ export default function EnrollmentManagement() {
     // Load courses based on role
     const loadCourses = useCallback(async () => {
         try {
-            const response = user?.role === 'admin'
-                ? await courseAPI.getTeacherCourses() // Admin can see all courses essentially via this or another endpoint, but let's assume teacher courses for now or we might need a specific admin endpoint if not covered
-                : await courseAPI.getTeacherCourses();
-
-            // If admin, we might want to fetch ALL courses. 
-            // The current API structure shows getTeacherCourses returns courses for the logged in teacher.
-            // If admin needs to see ALL courses, we might need to check if getTeacherCourses handles admins or if we need a new endpoint.
-            // Looking at course.routes.js: router.get('/teacher/:teacherId') checks if user is admin or the teacher.
-            // But courseAPI.getTeacherCourses() calls /courses/teacher which seems to be missing in the routes I saw?
-            // Wait, I saw router.get('/teacher/:teacherId') in course.routes.js
-            // But api.js calls axios.get(`${API_BASE_URL}/courses/teacher`)
-            // Let's re-read api.js and course.routes.js carefully.
-            // api.js: getTeacherCourses: () => axios.get(`${API_BASE_URL}/courses/teacher`)
-            // course.routes.js: router.get('/teacher/:teacherId', ...)
-            // There seems to be a mismatch or I missed a route.
-            // Let's assume for now we use what's available or fix it if needed.
-            // Actually, for Admin, let's try to get all courses if possible.
-            // api.js has getStudentCourses and getTeacherCourses.
-            // Let's use getTeacherCourses for now and see.
-
+            const response = await axios.get(`${API_BASE_URL}/courses/teacher`, { 
+              headers: getAuthHeader() 
+            });
             setCourses(response.data);
         } catch (error) {
             console.error('Error loading courses:', error);
@@ -45,26 +36,23 @@ export default function EnrollmentManagement() {
     const loadEnrollments = useCallback(async (courseId) => {
         if (!courseId) return;
         try {
-            const response = await enrollmentAPI.getCourseEnrollments(courseId);
+            const response = await axios.get(`${API_BASE_URL}/enrollments/course/${courseId}`, {
+              headers: getAuthHeader()
+            });
             setEnrolledStudents(response.data);
         } catch (error) {
             console.error('Error loading enrollments:', error);
         }
     }, []);
 
-    // Load all students for search (only if admin) or search functionality
-    // Since we don't have a "search students" API, we might need to fetch all users and filter, 
-    // or just rely on manual entry if the API doesn't support search.
-    // userAPI.getAllUsers() is available for super admin.
-    // Let's try to implement a simple search if we can get users.
+    // Load all students for search
     const searchStudents = async () => {
         if (!searchTerm) return;
         setLoading(true);
         try {
-            // Ideally we should have a search endpoint. For now, let's assume we can get all users and filter client side
-            // This is not performant for large datasets but works for MVP.
-            // Note: userAPI.getAllUsers might be restricted to admin.
-            const response = await userAPI.getAllUsers();
+            const response = await axios.get(`${API_BASE_URL}/users?role=student`, {
+              headers: getAuthHeader()
+            });
             const allUsers = response.data;
             const filtered = allUsers.filter(u =>
                 u.role === 'student' &&
@@ -75,8 +63,6 @@ export default function EnrollmentManagement() {
             setStudents(filtered);
         } catch (error) {
             console.error('Error searching students:', error);
-            // If we can't get all users (e.g. teacher role), we might need another way.
-            // For now, let's show a message if it fails.
             setMessage({ type: 'error', text: 'No se pudieron buscar estudiantes. Contacte al administrador.' });
         } finally {
             setLoading(false);
@@ -97,10 +83,12 @@ export default function EnrollmentManagement() {
 
     const handleEnroll = async (studentId) => {
         try {
-            await enrollmentAPI.enrollStudent(studentId, selectedCourse);
+            await axios.post(`${API_BASE_URL}/enrollments`, { 
+              studentId, 
+              courseId: selectedCourse 
+            }, { headers: getAuthHeader() });
             setMessage({ type: 'success', text: 'Estudiante inscrito exitosamente' });
             loadEnrollments(selectedCourse);
-            // Remove from search results to avoid double enrollment attempt
             setStudents(prev => prev.filter(s => s.id !== studentId));
         } catch (error) {
             setMessage({ type: 'error', text: error.response?.data?.error || 'Error al inscribir estudiante' });
@@ -110,7 +98,9 @@ export default function EnrollmentManagement() {
     const handleDrop = async (enrollmentId) => {
         if (!window.confirm('¿Está seguro de eliminar esta inscripción?')) return;
         try {
-            await enrollmentAPI.dropEnrollment(enrollmentId);
+            await axios.delete(`${API_BASE_URL}/enrollments/${enrollmentId}`, { 
+              headers: getAuthHeader() 
+            });
             setMessage({ type: 'success', text: 'Inscripción eliminada exitosamente' });
             loadEnrollments(selectedCourse);
         } catch (error) {

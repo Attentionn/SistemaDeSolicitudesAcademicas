@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { sequelize, User } = require('./src/models');
+const { sequelize, User, Faculty } = require('./src/models');
 
 async function seedDatabase() {
   try {
@@ -9,6 +9,15 @@ async function seedDatabase() {
     console.log('✅ Base de datos sincronizada\n');
 
     // ============================================
+    // CREAR FACULTADES
+    // ============================================
+    console.log('🏫 Creando Facultad...');
+    const faculties = await Faculty.bulkCreate([
+      { name: 'Telemática', description: 'Facultad de Ingeniería en Telemática' }
+    ]);
+    console.log(`✅ ${faculties.length} Facultad creada\n`);
+
+    // ============================================
     // CREAR ADMIN
     // ============================================
     console.log('👤 Creando Admin...');
@@ -16,7 +25,8 @@ async function seedDatabase() {
       name: 'Administrador Principal',
       email: 'admin@ucol.mx',
       password: 'Admin123!',
-      role: 'admin'
+      role: 'admin',
+      faculty: 'Telemática'
     });
     console.log(`✅ Admin creado: ${admin.email}\n`);
 
@@ -24,6 +34,7 @@ async function seedDatabase() {
     console.log('🎉 BASE DE DATOS POBLADA EXITOSAMENTE');
     console.log('═══════════════════════════════════════');
     console.log('\n📊 RESUMEN:');
+    console.log(`   • 1 Facultad (Telemática)`);
     console.log(`   • 1 Admin`);
     
     console.log('\n🔑 CREDENCIALES:');

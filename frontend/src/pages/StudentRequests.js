@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
+const getAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export default function StudentRequests() {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
@@ -10,11 +17,16 @@ export default function StudentRequests() {
 
   useEffect(() => {
     fetchRequests();
+    // Auto-refresh every 5 seconds
+    const interval = setInterval(fetchRequests, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchRequests = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/requests/student');
+      const response = await axios.get(`${API_BASE_URL}/requests/student`, {
+        headers: getAuthHeader()
+      });
       setRequests(response.data);
     } catch (error) {
       console.error('Error fetching requests:', error);
@@ -25,10 +37,13 @@ export default function StudentRequests() {
 
   const filteredRequests = requests.filter(request => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'pending') return request.status === 'pending';
-    if (activeTab === 'approved') return request.status === 'approved';
-    if (activeTab === 'rejected') return request.status === 'rejected';
-    return true;
+    // Solo filtrar por status si es accommodation (las absences no tienen status)
+    if (request.type === 'accommodation') {
+      if (activeTab === 'pending') return request.status === 'pending';
+      if (activeTab === 'approved') return request.status === 'approved';
+      if (activeTab === 'rejected') return request.status === 'rejected';
+    }
+    return false;
   });
 
   const getStatusBadge = (status) => {
@@ -73,9 +88,20 @@ export default function StudentRequests() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Mis Solicitudes</h1>
-          <p className="mt-2 text-gray-600">Revisa el estado de tus solicitudes</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Mis Solicitudes</h1>
+            <p className="mt-2 text-gray-600">Revisa el estado de tus solicitudes</p>
+          </div>
+          <button
+            onClick={fetchRequests}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Actualizar
+          </button>
         </div>
 
         {/* Stats Cards */}
@@ -327,6 +353,21 @@ export default function StudentRequests() {
                             </div>
                           )}
                         </div>
+                      </div>
+                    )}
+
+                    {request.observaciones && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-500">Observaciones del Profesor</p>
+                        <p className={`text-sm p-3 rounded-md ${
+                          request.tipo === 'justificada' 
+                            ? 'text-green-900 bg-green-50' 
+                            : request.tipo === 'injustificada'
+                            ? 'text-red-900 bg-red-50'
+                            : 'text-gray-900 bg-gray-50'
+                        }`}>
+                          {request.observaciones}
+                        </p>
                       </div>
                     )}
 

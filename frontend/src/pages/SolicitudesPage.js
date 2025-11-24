@@ -20,6 +20,7 @@ export default function SolicitudesPage() {
     motivo: '',
     fechaOriginal: '',
     fechaPropuesta: '',
+    extensionDays: '',
     requestedDate: new Date().toISOString().split('T')[0],
     description: ''
   });
@@ -81,22 +82,40 @@ export default function SolicitudesPage() {
     setLoading(true);
 
     try {
+      // Validar que courseId y description no estén vacíos
+      if (!formData.courseId) {
+        alert('Por favor selecciona un curso');
+        setLoading(false);
+        return;
+      }
+      
+      if (!formData.description) {
+        alert('Por favor describe tu solicitud');
+        setLoading(false);
+        return;
+      }
+
       const requestData = {
         type: formData.type,
         courseId: parseInt(formData.courseId),
-        motivo: formData.motivo,
+        motivo: formData.motivo || '',
         description: formData.description,
-        requestedDate: formData.requestedDate,
-        studentId: user?.id // Incluir el ID del usuario logueado
+        requestedDate: formData.requestedDate || new Date().toISOString().split('T')[0]
       };
 
       // Add specific fields based on request type
-      if (formData.type === 'deadline_extension') {
-        requestData.fechaOriginal = formData.fechaOriginal;
-        requestData.fechaPropuesta = formData.fechaPropuesta;
-      } else if (formData.type === 'exam_change') {
-        requestData.fechaOriginal = formData.fechaOriginal;
-        requestData.fechaPropuesta = formData.fechaPropuesta;
+      if (formData.type === 'deadline_extension' || formData.type === 'assignment_extension') {
+        if (formData.fechaOriginal) requestData.fechaOriginal = formData.fechaOriginal;
+        if (formData.fechaPropuesta) requestData.fechaPropuesta = formData.fechaPropuesta;
+        if (formData.extensionDays) requestData.extensionDays = parseInt(formData.extensionDays, 10);
+      }
+      if (formData.type === 'exam_change' || formData.type === 'exam_date_change') {
+        if (formData.fechaOriginal) requestData.fechaOriginal = formData.fechaOriginal;
+        if (formData.fechaPropuesta) {
+          // Enviar ambos para compatibilidad, backend normaliza newDate
+          requestData.fechaPropuesta = formData.fechaPropuesta;
+          requestData.newDate = formData.fechaPropuesta;
+        }
       }
 
       await accommodationAPI.createRequest(requestData);
@@ -108,6 +127,7 @@ export default function SolicitudesPage() {
         motivo: '',
         fechaOriginal: '',
         fechaPropuesta: '',
+        extensionDays: '',
         requestedDate: new Date().toISOString().split('T')[0],
         description: ''
       });
@@ -120,7 +140,7 @@ export default function SolicitudesPage() {
       alert('Solicitud enviada exitosamente');
     } catch (error) {
       console.error('Error creating request:', error);
-      alert('Error al enviar la solicitud');
+      alert('Error al enviar la solicitud: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -223,7 +243,9 @@ export default function SolicitudesPage() {
                     >
                       <option value="">Seleccionar tipo</option>
                       <option value="deadline_extension">Extensión de deadline</option>
+                      <option value="assignment_extension">Extensión de entrega</option>
                       <option value="exam_change">Cambio de examen</option>
+                      <option value="exam_date_change">Cambio de fecha de examen</option>
                     </select>
                   </div>
 
@@ -247,7 +269,7 @@ export default function SolicitudesPage() {
                     </select>
                   </div>
 
-                  {(formData.type === 'deadline_extension' || formData.type === 'exam_change') && (
+                  {(formData.type === 'deadline_extension' || formData.type === 'assignment_extension' || formData.type === 'exam_change' || formData.type === 'exam_date_change') && (
                     <>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
@@ -276,6 +298,22 @@ export default function SolicitudesPage() {
                           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         />
                       </div>
+                      {(formData.type === 'deadline_extension' || formData.type === 'assignment_extension') && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Días de Extensión (opcional)
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            name="extensionDays"
+                            value={formData.extensionDays}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="Si lo dejas vacío se calculará con fechas"
+                          />
+                        </div>
+                      )}
                     </>
                   )}
 

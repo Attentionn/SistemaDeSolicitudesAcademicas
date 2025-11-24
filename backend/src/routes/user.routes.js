@@ -8,13 +8,22 @@ const router = express.Router();
 // ⚠️ TODAS las rutas requieren autenticación
 // Solo admins pueden gestionar usuarios
 
-// Get all users (solo admin)
+// Get all users (con filtro opcional por rol)
 router.get('/', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
+    const { role } = req.query; // Filtro opcional
+    
+    const whereClause = {};
+    if (role) {
+      whereClause.role = role;
+    }
+    
     const users = await User.findAll({
+      where: whereClause,
       attributes: { exclude: ['password'] },
-      order: [['createdAt', 'DESC']]
+      order: [['name', 'ASC']]
     });
+    
     res.json(users);
   } catch (error) {
     res.status(400).json({ error: error.message });

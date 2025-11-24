@@ -12,6 +12,12 @@ const Enrollment = require('./enrollment.model')(sequelize);
 User.hasMany(Course, { foreignKey: 'teacherId', as: 'courses' });
 Course.belongsTo(User, { foreignKey: 'teacherId', as: 'teacher' });
 
+// Enrollment associations
+Enrollment.belongsTo(User, { foreignKey: 'studentId', as: 'student' });
+Enrollment.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
+User.hasMany(Enrollment, { foreignKey: 'studentId' });
+Course.hasMany(Enrollment, { foreignKey: 'courseId' });
+
 // User - Course (Students) - Muchos a Muchos
 User.belongsToMany(Course, { 
   through: Enrollment, 
@@ -27,6 +33,10 @@ Course.belongsToMany(User, {
 // User - Accommodation (Student)
 User.hasMany(Accommodation, { foreignKey: 'studentId', as: 'studentAccommodations' });
 Accommodation.belongsTo(User, { foreignKey: 'studentId', as: 'student' });
+
+// User - Accommodation (Teacher)
+User.hasMany(Accommodation, { foreignKey: 'teacherId', as: 'teacherAccommodations' });
+Accommodation.belongsTo(User, { foreignKey: 'teacherId', as: 'teacher' });
 
 // Course - Accommodation
 Course.hasMany(Accommodation, { foreignKey: 'courseId', as: 'accommodations' });

@@ -15,9 +15,9 @@ export default function AbsenceManagement() {
   // Form states
   const [formData, setFormData] = useState({
     fecha: '',
-    materia: '',
     motivo: '',
-    courseId: ''
+    courseId: '',
+    studentId: ''
   });
 
   const loadCourses = useCallback(async () => {
@@ -77,31 +77,73 @@ export default function AbsenceManagement() {
     setLoading(true);
 
     try {
-      const absenceData = {
-        fecha: formData.fecha,
-        materia: formData.materia,
-        motivo: formData.motivo,
-        courseId: parseInt(formData.courseId),
-        studentId: user?.id // Incluir el ID del usuario logueado
-      };
+      if (!formData.courseId) {
+        alert('Por favor selecciona un curso');
+        setLoading(false);
+        return;
+      }
 
-      await absenceAPI.createAbsence(absenceData);
-      
-      // Reset form
-      setFormData({
-        fecha: '',
-        materia: '',
-        motivo: '',
-        courseId: ''
-      });
+      if (!formData.fecha) {
+        alert('Por favor selecciona una fecha');
+        setLoading(false);
+        return;
+      }
 
-      // Reload absences
-      loadStudentAbsences();
-      
-      alert('Aviso de falta enviado exitosamente');
+      // Estudiantes crean avisos de falta futura
+      if (user?.role === 'student') {
+        const absenceData = {
+          fecha: formData.fecha,
+          motivo: formData.motivo,
+          courseId: parseInt(formData.courseId),
+          tipo: 'prevista'
+        };
+
+        await absenceAPI.createAbsence(absenceData);
+        
+        setFormData({
+          fecha: '',
+          motivo: '',
+          courseId: '',
+          studentId: ''
+        });
+
+        loadStudentAbsences();
+        alert('Aviso de falta enviado exitosamente');
+        return;
+      }
+
+      // Profesores registran faltas después
+      if (user?.role === 'teacher' || user?.role === 'admin') {
+        if (!formData.studentId) {
+          alert('Por favor selecciona un estudiante');
+          setLoading(false);
+          return;
+        }
+
+        const absenceData = {
+          fecha: formData.fecha,
+          motivo: formData.motivo,
+          courseId: parseInt(formData.courseId),
+          studentId: parseInt(formData.studentId),
+          tipo: 'prevista'
+        };
+
+        await absenceAPI.createAbsence(absenceData);
+        
+        setFormData({
+          fecha: '',
+          motivo: '',
+          courseId: '',
+          studentId: ''
+        });
+
+        loadTeacherAbsences();
+        alert('Falta registrada exitosamente');
+        return;
+      }
     } catch (error) {
       console.error('Error creating absence:', error);
-      alert('Error al enviar el aviso de falta');
+      alert('Error: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -173,54 +215,60 @@ export default function AbsenceManagement() {
           {/* Student Absences List */}
           {activeTab === 'list' && (
             <div className="mt-6">
-              <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                <ul className="divide-y divide-gray-200">
-                  {absences.map((absence) => (
-                    <li key={absence.id}>
-                      <div className="px-4 py-4 sm:px-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium text-blue-600 truncate">
-                                {absence.materia}
-                              </p>
-                              <div className="ml-2 flex-shrink-0 flex">
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAbsenceTypeColor(absence.tipo)}`}>
-                                  {getAbsenceTypeLabel(absence.tipo)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="mt-2">
-                              <div className="flex items-center text-sm text-gray-500">
-                                <p>
-                                  <span className="font-medium">Fecha:</span> {new Date(absence.fecha).toLocaleDateString()}
+              {absences.length === 0 ? (
+                <div className="bg-white shadow sm:rounded-lg p-6 text-center">
+                  <p className="text-gray-600">No tienes faltas registradas</p>
+                </div>
+              ) : (
+                <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                  <ul className="divide-y divide-gray-200">
+                    {absences.map((absence) => (
+                      <li key={absence.id}>
+                        <div className="px-4 py-4 sm:px-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-blue-600 truncate">
+                                  {absence.course?.name}
                                 </p>
-                                <p className="ml-4">
-                                  <span className="font-medium">Curso:</span> {absence.course?.name}
-                                </p>
+                                <div className="ml-2 flex-shrink-0 flex">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAbsenceTypeColor(absence.tipo)}`}>
+                                    {getAbsenceTypeLabel(absence.tipo)}
+                                  </span>
+                                </div>
                               </div>
-                              {absence.motivo && (
-                                <div className="mt-1">
-                                  <p className="text-sm text-gray-600">
-                                    <span className="font-medium">Motivo:</span> {absence.motivo}
+                              <div className="mt-2">
+                                <div className="flex items-center text-sm text-gray-500">
+                                  <p>
+                                    <span className="font-medium">Fecha:</span> {new Date(absence.fecha).toLocaleDateString()}
+                                  </p>
+                                  <p className="ml-4">
+                                    <span className="font-medium">Profesor:</span> {absence.teacher?.name}
                                   </p>
                                 </div>
-                              )}
-                              {absence.observaciones && (
-                                <div className="mt-1">
-                                  <p className="text-sm text-gray-600">
-                                    <span className="font-medium">Observaciones del profesor:</span> {absence.observaciones}
-                                  </p>
-                                </div>
-                              )}
+                                {absence.motivo && (
+                                  <div className="mt-1">
+                                    <p className="text-sm text-gray-600">
+                                      <span className="font-medium">Motivo:</span> {absence.motivo}
+                                    </p>
+                                  </div>
+                                )}
+                                {absence.observaciones && (
+                                  <div className="mt-1">
+                                    <p className="text-sm text-gray-600">
+                                      <span className="font-medium">Observaciones:</span> {absence.observaciones}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
@@ -231,10 +279,13 @@ export default function AbsenceManagement() {
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
                   Avisar Falta Futura
                 </h3>
+                <p className="mt-2 text-sm text-gray-600">
+                  Avisa a tus profesores si sabes que vas a faltar a una clase
+                </p>
                 <form onSubmit={handleSubmit} className="mt-6 space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Curso
+                      Curso *
                     </label>
                     <select
                       name="courseId"
@@ -254,7 +305,7 @@ export default function AbsenceManagement() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Fecha de la Falta
+                      Fecha de la Falta *
                     </label>
                     <input
                       type="date"
@@ -268,28 +319,12 @@ export default function AbsenceManagement() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Materia
-                    </label>
-                    <input
-                      type="text"
-                      name="materia"
-                      value={formData.materia}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Nombre de la materia"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
                       Motivo
                     </label>
                     <textarea
                       name="motivo"
                       value={formData.motivo}
                       onChange={handleInputChange}
-                      required
                       rows={4}
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       placeholder="Explica el motivo de tu falta..."
@@ -344,6 +379,90 @@ export default function AbsenceManagement() {
           </div>
         </div>
 
+        {/* Register New Absence Form */}
+        <div className="mt-6 bg-white shadow sm:rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+              Registrar Nueva Falta
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Curso *
+                  </label>
+                  <select
+                    name="courseId"
+                    value={formData.courseId}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  >
+                    <option value="">Seleccionar curso</option>
+                    {courses.map(course => (
+                      <option key={course.id} value={course.id}>
+                        {course.name} - {course.code}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Estudiante *
+                  </label>
+                  <select
+                    name="studentId"
+                    value={formData.studentId}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  >
+                    <option value="">Seleccionar estudiante</option>
+                    {/* Would need to populate with students from selected course */}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Fecha de la Falta *
+                  </label>
+                  <input
+                    type="date"
+                    name="fecha"
+                    value={formData.fecha}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Motivo
+                  </label>
+                  <textarea
+                    name="motivo"
+                    value={formData.motivo}
+                    onChange={handleInputChange}
+                    rows={2}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Motivo de la falta (opcional)"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                {loading ? 'Registrando...' : 'Registrar Falta'}
+              </button>
+            </form>
+          </div>
+        </div>
+
         {/* Teacher Absences List */}
         <div className="mt-6">
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -355,7 +474,7 @@ export default function AbsenceManagement() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-blue-600 truncate">
-                            {absence.materia}
+                            {absence.course?.name}
                           </p>
                           <div className="ml-2 flex-shrink-0 flex">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAbsenceTypeColor(absence.tipo)}`}>

@@ -27,7 +27,8 @@ export default function Navbar() {
     }
 
     if (user?.role === 'admin') {
-      baseItems.push({ name: 'Administración', href: '/dashboard' });
+      // Link directo al panel admin real (/admin) y evitar duplicar dashboard
+      baseItems.push({ name: 'Admin', href: '/admin' });
       baseItems.push({ name: 'Inscripciones', href: '/inscripciones' });
     }
 

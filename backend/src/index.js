@@ -18,6 +18,7 @@ app.use('/api/courses', require('./routes/course.routes'));
 app.use('/api/enrollments', require('./routes/enrollment.routes'));
 app.use('/api/accommodations', require('./routes/accommodation.routes'));
 app.use('/api/absences', require('./routes/absence.routes'));
+app.use('/api/requests', require('./routes/requests.routes'));
 app.use('/api/faculties', require('./routes/faculties.routes'));
 
 const PORT = process.env.PORT || 5000;

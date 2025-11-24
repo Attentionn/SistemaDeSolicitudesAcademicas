@@ -318,7 +318,6 @@ export default function SuperAdminPanel() {
                         <option value="student">Estudiante</option>
                         <option value="teacher">Profesor</option>
                         <option value="admin">Administrador</option>
-                        <option value="admin">Administrador</option>
                       </select>
                     </div>
                     {formData.role === 'student' && (
@@ -424,7 +423,6 @@ export default function SuperAdminPanel() {
                       >
                         <option value="student">Estudiante</option>
                         <option value="teacher">Profesor</option>
-                        <option value="admin">Administrador</option>
                         <option value="admin">Administrador</option>
                       </select>
                     </div>

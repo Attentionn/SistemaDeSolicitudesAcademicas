@@ -56,7 +56,6 @@ router.get('/student/:studentId', authenticateToken, async (req, res) => {
       where: { studentId, status: 'active' },
       include: [{
         model: Course,
-        as: 'course',
         include: [{
           model: User,
           as: 'teacher',

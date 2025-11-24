@@ -33,7 +33,23 @@ module.exports = (sequelize) => {
     }
   }, {
     tableName: 'enrollments',
-    timestamps: true
+    timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['studentId', 'courseId']
+      }
+    ]
+  });
+
+  // Validaciones de integridad de Enrollment
+  Enrollment.addHook('beforeCreate', async (enrollment) => {
+    const { User, Course } = sequelize.models;
+    const student = await User.findByPk(enrollment.studentId);
+    if (!student) throw new Error('studentId no existe');
+    if (student.role !== 'student') throw new Error('studentId debe pertenecer a un usuario con rol student');
+    const course = await Course.findByPk(enrollment.courseId);
+    if (!course) throw new Error('courseId no existe');
   });
 
   return Enrollment;

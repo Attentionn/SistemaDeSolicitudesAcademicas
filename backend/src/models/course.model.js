@@ -38,5 +38,23 @@ module.exports = (sequelize) => {
     }
   });
 
+  // Validar que el teacherId corresponde a un usuario con rol 'teacher'
+  Course.addHook('beforeCreate', async (course) => {
+    const { User } = sequelize.models;
+    if (!course.teacherId) throw new Error('Course requiere teacherId');
+    const teacher = await User.findByPk(course.teacherId);
+    if (!teacher) throw new Error('Profesor asignado no existe');
+    if (teacher.role !== 'teacher') throw new Error('teacherId debe pertenecer a un usuario con rol teacher');
+  });
+
+  Course.addHook('beforeUpdate', async (course) => {
+    if (course.changed('teacherId')) {
+      const { User } = sequelize.models;
+      const teacher = await User.findByPk(course.teacherId);
+      if (!teacher) throw new Error('Profesor asignado no existe');
+      if (teacher.role !== 'teacher') throw new Error('teacherId debe pertenecer a un usuario con rol teacher');
+    }
+  });
+
   return Course;
 }; 

@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
+const getAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export default function TeacherDashboard() {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
@@ -10,14 +17,21 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     fetchRequests();
+    // Auto-refresh every 5 seconds
+    const interval = setInterval(fetchRequests, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchRequests = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/requests/teacher');
-      setRequests(response.data);
+      const response = await axios.get(`${API_BASE_URL}/requests/teacher`, {
+        headers: getAuthHeader()
+      });
+      console.log('Teacher requests:', response.data);
+      setRequests(response.data || []);
     } catch (error) {
       console.error('Error fetching requests:', error);
+      setRequests([]);
     } finally {
       setLoading(false);
     }
@@ -26,43 +40,64 @@ export default function TeacherDashboard() {
   const handleApproveRequest = async (requestId, type) => {
     try {
       if (type === 'accommodation') {
-        await axios.patch(`http://localhost:5000/api/accommodations/${requestId}`, {
+        await axios.patch(`${API_BASE_URL}/accommodations/${requestId}`, {
           status: 'approved'
-        });
+        }, { headers: getAuthHeader() });
       } else if (type === 'absence') {
-        await axios.patch(`http://localhost:5000/api/absences/${requestId}`, {
-          status: 'approved'
-        });
+        // For absences, mark as justificada (approved)
+        await axios.patch(`${API_BASE_URL}/absences/${requestId}`, {
+          tipo: 'justificada'
+        }, { headers: getAuthHeader() });
       }
       fetchRequests(); // Refresh the list
     } catch (error) {
       console.error('Error approving request:', error);
+      alert('Error al aprobar solicitud: ' + (error.response?.data?.error || error.message));
     }
   };
 
   const handleRejectRequest = async (requestId, type, teacherResponse = '') => {
     try {
       if (type === 'accommodation') {
-        await axios.patch(`http://localhost:5000/api/accommodations/${requestId}`, {
+        await axios.patch(`${API_BASE_URL}/accommodations/${requestId}`, {
           status: 'rejected',
           teacherResponse
-        });
+        }, { headers: getAuthHeader() });
       } else if (type === 'absence') {
-        await axios.patch(`http://localhost:5000/api/absences/${requestId}`, {
-          status: 'rejected',
-          observaciones: teacherResponse
-        });
+        // For absences, mark as injustificada (rejected)
+        await axios.patch(`${API_BASE_URL}/absences/${requestId}`, {
+          tipo: 'injustificada'
+        }, { headers: getAuthHeader() });
       }
       fetchRequests(); // Refresh the list
     } catch (error) {
       console.error('Error rejecting request:', error);
+      alert('Error al rechazar solicitud: ' + (error.response?.data?.error || error.message));
     }
   };
 
   const filteredRequests = requests.filter(request => {
-    if (activeTab === 'pending') return request.status === 'pending';
-    if (activeTab === 'approved') return request.status === 'approved';
-    if (activeTab === 'rejected') return request.status === 'rejected';
+    if (activeTab === 'pending') {
+      // Para accommodations, status === 'pending'
+      // Para absences, tipo === 'prevista'
+      if (request.type === 'accommodation') return request.status === 'pending';
+      if (request.type === 'absence') return request.tipo === 'prevista';
+      return false;
+    }
+    if (activeTab === 'approved') {
+      // Para accommodations, status === 'approved'
+      // Para absences, tipo === 'justificada'
+      if (request.type === 'accommodation') return request.status === 'approved';
+      if (request.type === 'absence') return request.tipo === 'justificada';
+      return false;
+    }
+    if (activeTab === 'rejected') {
+      // Para accommodations, status === 'rejected'
+      // Para absences, tipo === 'injustificada'
+      if (request.type === 'accommodation') return request.status === 'rejected';
+      if (request.type === 'absence') return request.tipo === 'injustificada';
+      return false;
+    }
     return true;
   });
 
@@ -104,9 +139,20 @@ export default function TeacherDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Panel de Profesor</h1>
-          <p className="mt-2 text-gray-600">Gestiona las solicitudes de tus estudiantes</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Panel de Profesor</h1>
+            <p className="mt-2 text-gray-600">Gestiona las solicitudes de tus estudiantes</p>
+          </div>
+          <button
+            onClick={fetchRequests}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Actualizar
+          </button>
         </div>
 
         {/* Stats Cards */}
@@ -225,8 +271,23 @@ export default function TeacherDashboard() {
                       <h3 className="text-lg font-medium text-gray-900">
                         {request.student?.name}
                       </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(request.status)}`}>
-                        {getStatusText(request.status)}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        request.type === 'accommodation' 
+                          ? getStatusBadge(request.status)
+                          : request.tipo === 'prevista' 
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : request.tipo === 'justificada'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {request.type === 'accommodation' 
+                          ? getStatusText(request.status)
+                          : request.tipo === 'prevista' 
+                          ? 'Prevista'
+                          : request.tipo === 'justificada'
+                          ? 'Justificada'
+                          : 'Injustificada'
+                        }
                       </span>
                     </div>
                     
@@ -350,7 +411,8 @@ export default function TeacherDashboard() {
                     )}
                   </div>
 
-                  {request.status === 'pending' && (
+                  {(request.type === 'accommodation' && request.status === 'pending') || 
+                   (request.type === 'absence' && request.tipo === 'prevista') ? (
                     <div className="flex space-x-2 ml-4">
                       <button
                         onClick={() => handleApproveRequest(request.id, request.type)}
@@ -359,7 +421,7 @@ export default function TeacherDashboard() {
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                        Aprobar
+                        {request.type === 'absence' ? 'Justificar' : 'Aprobar'}
                       </button>
                       <button
                         onClick={() => {
@@ -371,10 +433,10 @@ export default function TeacherDashboard() {
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
-                        Rechazar
+                        {request.type === 'absence' ? 'Marcar Injustificada' : 'Rechazar'}
                       </button>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ))
