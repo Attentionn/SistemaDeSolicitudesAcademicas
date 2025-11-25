@@ -79,16 +79,16 @@ const CreateCourseForm = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+    <div className="card rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
         Crear Curso
       </h2>
 
       {message.text && (
         <div className={`mb-4 p-4 rounded ${
           message.type === 'success' 
-            ? 'bg-green-100 text-green-700' 
-            : 'bg-red-100 text-red-700'
+            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
         }`}>
           {message.text}
         </div>
@@ -97,7 +97,7 @@ const CreateCourseForm = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Nombre del Curso */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Nombre del Curso *
           </label>
           <input
@@ -105,7 +105,7 @@ const CreateCourseForm = () => {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             placeholder="Ej: Programación Web"
             required
           />
@@ -113,7 +113,7 @@ const CreateCourseForm = () => {
 
         {/* Código */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Código del Curso *
           </label>
           <input
@@ -121,23 +121,23 @@ const CreateCourseForm = () => {
             name="code"
             value={formData.code}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             placeholder="Ej: TEL101"
             required
           />
-          <p className="text-sm text-gray-500 mt-1">Debe ser único</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Debe ser único</p>
         </div>
 
         {/* Descripción */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Descripción
           </label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             placeholder="Descripción del curso"
             rows="3"
           />
@@ -145,7 +145,7 @@ const CreateCourseForm = () => {
 
         {/* Horario */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Horario
           </label>
           <input
@@ -153,14 +153,14 @@ const CreateCourseForm = () => {
             name="schedule"
             value={formData.schedule}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             placeholder="Ej: Lunes y Miércoles 10:00-12:00"
           />
         </div>
 
         {/* Salón */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Salón/Aula
           </label>
           <input
@@ -168,21 +168,21 @@ const CreateCourseForm = () => {
             name="classroom"
             value={formData.classroom}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             placeholder="Ej: Lab 3"
           />
         </div>
 
         {/* Profesor Asignado */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Profesor Asignado *
           </label>
           <select
             name="teacherId"
             value={formData.teacherId}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             required
           >
             <option value="">Seleccionar profesor...</option>
@@ -193,7 +193,7 @@ const CreateCourseForm = () => {
             ))}
           </select>
           {teachers.length === 0 && (
-            <p className="text-sm text-orange-600 mt-1">
+            <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
               ⚠️ Primero debes crear al menos un profesor
             </p>
           )}
@@ -203,11 +203,7 @@ const CreateCourseForm = () => {
         <button
           type="submit"
           disabled={loading || teachers.length === 0}
-          className={`w-full py-3 px-4 rounded-lg text-white font-semibold transition-colors ${
-            loading || teachers.length === 0
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'
-          }`}
+          className="btn btn-primary w-full disabled:opacity-50"
         >
           {loading ? 'Creando...' : 'Crear Curso'}
         </button>

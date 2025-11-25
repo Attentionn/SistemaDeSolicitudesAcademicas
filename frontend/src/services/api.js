@@ -47,6 +47,14 @@ export const absenceAPI = {
   createAbsence: (absenceData) => 
     axios.post(`${API_BASE_URL}/absences`, absenceData),
   
+  // Create absence with file upload
+  createAbsenceWithFile: (formData) => 
+    axios.post(`${API_BASE_URL}/absences`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }),
+  
   // Get absences for student
   getStudentAbsences: () => 
     axios.get(`${API_BASE_URL}/absences/student`),
@@ -64,7 +72,11 @@ export const absenceAPI = {
   
   // Get absence by ID
   getAbsenceById: (id) => 
-    axios.get(`${API_BASE_URL}/absences/${id}`)
+    axios.get(`${API_BASE_URL}/absences/${id}`),
+  
+  // Get evidence file URL
+  getEvidenceUrl: (absenceId) => 
+    `${API_BASE_URL}/absences/evidencia/${absenceId}`
 };
 
 // Course API

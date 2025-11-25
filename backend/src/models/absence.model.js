@@ -23,6 +23,11 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    evidencia: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'Ruta del archivo de evidencia (PDF/PNG)'
+    },
     studentId: {
       type: DataTypes.INTEGER,
       allowNull: false,

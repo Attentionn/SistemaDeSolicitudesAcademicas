@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { absenceAPI, courseAPI } from '../services/api';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 export default function AbsenceManagement() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('list');
@@ -17,7 +19,8 @@ export default function AbsenceManagement() {
     fecha: '',
     motivo: '',
     courseId: '',
-    studentId: ''
+    studentId: '',
+    evidencia: null
   });
 
   const loadCourses = useCallback(async () => {
@@ -65,11 +68,18 @@ export default function AbsenceManagement() {
   }, [filters, user?.role, loadTeacherAbsences]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, files } = e.target;
+    if (name === 'evidencia' && files && files.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        evidencia: files[0]
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -91,20 +101,25 @@ export default function AbsenceManagement() {
 
       // Estudiantes crean avisos de falta futura
       if (user?.role === 'student') {
-        const absenceData = {
-          fecha: formData.fecha,
-          motivo: formData.motivo,
-          courseId: parseInt(formData.courseId),
-          tipo: 'prevista'
-        };
+        // Usar FormData para soportar archivos
+        const formDataToSend = new FormData();
+        formDataToSend.append('fecha', formData.fecha);
+        formDataToSend.append('motivo', formData.motivo);
+        formDataToSend.append('courseId', formData.courseId);
+        formDataToSend.append('tipo', 'prevista');
+        
+        if (formData.evidencia) {
+          formDataToSend.append('evidencia', formData.evidencia);
+        }
 
-        await absenceAPI.createAbsence(absenceData);
+        await absenceAPI.createAbsenceWithFile(formDataToSend);
         
         setFormData({
           fecha: '',
           motivo: '',
           courseId: '',
-          studentId: ''
+          studentId: '',
+          evidencia: null
         });
 
         loadStudentAbsences();
@@ -120,21 +135,25 @@ export default function AbsenceManagement() {
           return;
         }
 
-        const absenceData = {
-          fecha: formData.fecha,
-          motivo: formData.motivo,
-          courseId: parseInt(formData.courseId),
-          studentId: parseInt(formData.studentId),
-          tipo: 'prevista'
-        };
+        const formDataToSend = new FormData();
+        formDataToSend.append('fecha', formData.fecha);
+        formDataToSend.append('motivo', formData.motivo);
+        formDataToSend.append('courseId', formData.courseId);
+        formDataToSend.append('studentId', formData.studentId);
+        formDataToSend.append('tipo', 'prevista');
+        
+        if (formData.evidencia) {
+          formDataToSend.append('evidencia', formData.evidencia);
+        }
 
-        await absenceAPI.createAbsence(absenceData);
+        await absenceAPI.createAbsenceWithFile(formDataToSend);
         
         setFormData({
           fecha: '',
           motivo: '',
           courseId: '',
-          studentId: ''
+          studentId: '',
+          evidencia: null
         });
 
         loadTeacherAbsences();
@@ -260,6 +279,21 @@ export default function AbsenceManagement() {
                                     </p>
                                   </div>
                                 )}
+                                {absence.evidencia && (
+                                  <div className="mt-2">
+                                    <a
+                                      href={`${API_BASE_URL}/absences/evidencia/${absence.id}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                    >
+                                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                      </svg>
+                                      Ver evidencia adjunta
+                                    </a>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -332,6 +366,28 @@ export default function AbsenceManagement() {
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Evidencia (PDF o PNG)
+                    </label>
+                    <input
+                      type="file"
+                      name="evidencia"
+                      accept=".pdf,.png"
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full text-sm text-gray-900 dark:text-gray-100 
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100
+                        dark:file:bg-blue-900 dark:file:text-blue-300"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Opcional: Adjunta recetas médicas u otra documentación de respaldo
+                    </p>
+                  </div>
+
+                  <div>
                     <button
                       type="submit"
                       disabled={loading}
@@ -353,13 +409,20 @@ export default function AbsenceManagement() {
   return (
     <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-app text-app">
       <div className="py-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Gestión de Faltas de Estudiantes</h1>
-        
-        {/* Se removieron filtros y formulario de registro manual por falta de uso */}
-        <div className="mt-6 card shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <p className="text-sm text-gray-600 dark:text-gray-300">Vista simplificada: sólo se muestran las faltas registradas y acciones para justificarlas o marcarlas como injustificadas. Si necesitas volver a registrar faltas manualmente puedo reactivarlo.</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestión de Faltas</h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">Revisa y gestiona las faltas de tus estudiantes</p>
           </div>
+          <button
+            onClick={loadTeacherAbsences}
+            className="btn btn-primary"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Actualizar
+          </button>
         </div>
 
         {/* Teacher Absences List */}
@@ -405,6 +468,21 @@ export default function AbsenceManagement() {
                               <p className="text-sm text-gray-600 dark:text-gray-300">
                                 <span className="font-medium">Observaciones:</span> {absence.observaciones}
                               </p>
+                            </div>
+                          )}
+                          {absence.evidencia && (
+                            <div className="mt-2">
+                              <a
+                                href={`${API_BASE_URL}/absences/evidencia/${absence.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                                Ver evidencia adjunta
+                              </a>
                             </div>
                           )}
                         </div>

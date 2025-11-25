@@ -97,16 +97,16 @@ const CreateUserForm = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+    <div className="card rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
         Crear Usuario
       </h2>
 
       {message.text && (
         <div className={`mb-4 p-4 rounded ${
           message.type === 'success' 
-            ? 'bg-green-100 text-green-700' 
-            : 'bg-red-100 text-red-700'
+            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
         }`}>
           {message.text}
         </div>
@@ -115,14 +115,14 @@ const CreateUserForm = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Tipo de Usuario */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Tipo de Usuario *
           </label>
           <select
             name="role"
             value={formData.role}
             onChange={handleRoleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             required
           >
             <option value="student">Estudiante</option>
@@ -132,7 +132,7 @@ const CreateUserForm = () => {
 
         {/* Nombre Completo */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Nombre Completo *
           </label>
           <input
@@ -140,7 +140,7 @@ const CreateUserForm = () => {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             placeholder="Ej: Juan Pérez García"
             required
           />
@@ -148,7 +148,7 @@ const CreateUserForm = () => {
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Email *
           </label>
           <input
@@ -156,7 +156,7 @@ const CreateUserForm = () => {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             placeholder="ejemplo@ucol.mx"
             required
           />
@@ -164,7 +164,7 @@ const CreateUserForm = () => {
 
         {/* Contraseña */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Contraseña *
           </label>
           <input
@@ -172,7 +172,7 @@ const CreateUserForm = () => {
             name="password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             placeholder="Mínimo 8 caracteres"
             minLength="8"
             required
@@ -182,7 +182,7 @@ const CreateUserForm = () => {
         {/* ID de Estudiante (solo si es estudiante) */}
         {formData.role === 'student' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               ID de Estudiante *
             </label>
             <input
@@ -190,7 +190,7 @@ const CreateUserForm = () => {
               name="studentId"
               value={formData.studentId}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="input w-full"
               placeholder="Ej: 20231001"
               required={formData.role === 'student'}
             />
@@ -199,7 +199,7 @@ const CreateUserForm = () => {
 
         {/* Facultad */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Facultad
           </label>
           {faculties.length > 0 ? (
@@ -207,7 +207,7 @@ const CreateUserForm = () => {
               name="faculty"
               value={formData.faculty}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="input w-full"
             >
               <option value="">Seleccionar facultad...</option>
               {faculties.map(faculty => (
@@ -222,7 +222,7 @@ const CreateUserForm = () => {
               name="faculty"
               value={formData.faculty}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="input w-full"
               placeholder="Ej: Telemática"
             />
           )}
@@ -232,11 +232,7 @@ const CreateUserForm = () => {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-3 px-4 rounded-lg text-white font-semibold transition-colors ${
-            loading 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'
-          }`}
+          className="btn btn-primary w-full disabled:opacity-50"
         >
           {loading ? 'Creando...' : `Crear ${formData.role === 'student' ? 'Estudiante' : 'Profesor'}`}
         </button>

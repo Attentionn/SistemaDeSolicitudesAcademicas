@@ -44,27 +44,29 @@ export default function Dashboard() {
                     {user?.email}
                   </dd>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800/60 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-600 dark:text-gray-300">Rol</dt>
-                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 sm:mt-0 sm:col-span-2">
-                    {user?.role === 'student' ? 'estudiante' : user?.role}
-                  </dd>
-                </div>
                 {user?.role === 'student' && (
                   <>
-                    <div className="bg-white dark:bg-gray-800 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div className="bg-gray-50 dark:bg-gray-800/60 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt className="text-sm font-medium text-gray-600 dark:text-gray-300">Matrícula</dt>
                       <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 sm:mt-0 sm:col-span-2">
                         {user?.studentId}
                       </dd>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-800/60 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div className="bg-white dark:bg-gray-800 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt className="text-sm font-medium text-gray-600 dark:text-gray-300">Facultad</dt>
                       <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 sm:mt-0 sm:col-span-2">
                         {user?.faculty || 'No especificada'}
                       </dd>
                     </div>
                   </>
+                )}
+                {user?.role === 'teacher' && (
+                  <div className="bg-gray-50 dark:bg-gray-800/60 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-600 dark:text-gray-300">Facultad</dt>
+                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 sm:mt-0 sm:col-span-2">
+                      {user?.faculty || 'No especificada'}
+                    </dd>
+                  </div>
                 )}
               </dl>
             </div>
@@ -91,8 +93,8 @@ export default function Dashboard() {
               </h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-200">
                 {user?.role === 'student' 
-                  ? 'Crear y gestionar tus solicitudes de extensión y cambio de examen'
-                  : 'Revisar y aprobar solicitudes de tus estudiantes'
+                  ? 'Crear y gestionar solicitudes de acomodación académica'
+                  : 'Gestiona y aprueba solicitudes de tus estudiantes'
                 }
               </p>
             </div>
@@ -133,32 +135,34 @@ export default function Dashboard() {
             </span>
           </Link>
 
-          <Link
-            to="/mis-solicitudes"
-            className="relative group card p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg hover:shadow-md transition-shadow"
-          >
-            <div>
-              <span className="rounded-lg inline-flex p-3 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 ring-4 ring-white dark:ring-gray-900">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          {user?.role === 'student' && (
+            <Link
+              to="/mis-solicitudes"
+              className="relative group card p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg hover:shadow-md transition-shadow"
+            >
+              <div>
+                <span className="rounded-lg inline-flex p-3 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 ring-4 ring-white dark:ring-gray-900">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                </span>
+              </div>
+              <div className="mt-8">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  <span className="absolute inset-0" aria-hidden="true" />
+                  Mis Solicitudes
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-200">
+                  Revisa el estado de tus solicitudes enviadas
+                </p>
+              </div>
+              <span className="pointer-events-none absolute top-6 right-6 text-gray-300 dark:text-gray-500 group-hover:text-gray-400 dark:group-hover:text-gray-400" aria-hidden="true">
+                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 4h1a1 1 0 00-1-1v1zm-1 12a1 1 0 102 0h-2zM8 3a1 1 0 000 2V3zM3.293 19.293a1 1 0 101.414 1.414l-1.414-1.414zM19 4v12h2V4h-2zm1-1H8v2h12V3zm-.707.293l-16 16 1.414 1.414 16-16-1.414-1.414z" />
                 </svg>
               </span>
-            </div>
-            <div className="mt-8">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                <span className="absolute inset-0" aria-hidden="true" />
-                Mis Solicitudes
-              </h3>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-200">
-                Revisa el estado de tus solicitudes enviadas
-              </p>
-            </div>
-            <span className="pointer-events-none absolute top-6 right-6 text-gray-300 dark:text-gray-500 group-hover:text-gray-400 dark:group-hover:text-gray-400" aria-hidden="true">
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20 4h1a1 1 0 00-1-1v1zm-1 12a1 1 0 102 0h-2zM8 3a1 1 0 000 2V3zM3.293 19.293a1 1 0 101.414 1.414l-1.414-1.414zM19 4v12h2V4h-2zm1-1H8v2h12V3zm-.707.293l-16 16 1.414 1.414 16-16-1.414-1.414z" />
-              </svg>
-            </span>
-          </Link>
+            </Link>
+          )}
         </div>
       </div>
     </div>

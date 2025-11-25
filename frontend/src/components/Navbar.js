@@ -36,7 +36,6 @@ export default function Navbar() {
     }
     if (user?.role === 'admin') {
       items.push({ name: 'Admin', href: '/admin' });
-      items.push({ name: 'Inscripciones', href: '/inscripciones' });
     }
     return items;
   };

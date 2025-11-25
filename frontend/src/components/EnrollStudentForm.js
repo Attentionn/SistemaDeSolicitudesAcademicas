@@ -171,16 +171,16 @@ const EnrollStudentForm = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+    <div className="card rounded-lg shadow-md p-6 max-w-4xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
         Gestión de Inscripciones
       </h2>
 
       {message.text && (
         <div className={`mb-4 p-4 rounded ${
           message.type === 'success' 
-            ? 'bg-green-100 text-green-700' 
-            : 'bg-red-100 text-red-700'
+            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
         }`}>
           {message.text}
         </div>
@@ -189,13 +189,13 @@ const EnrollStudentForm = () => {
       <form onSubmit={handleSubmit} className="space-y-4 mb-8">
         {/* Curso */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Curso *
           </label>
           <select
             value={formData.courseId}
             onChange={handleCourseChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             required
           >
             <option value="">Seleccionar curso...</option>
@@ -209,7 +209,7 @@ const EnrollStudentForm = () => {
 
         {/* Búsqueda de Estudiante */}
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Buscar Estudiante *
           </label>
           <input
@@ -217,28 +217,28 @@ const EnrollStudentForm = () => {
             value={formData.searchQuery}
             onChange={handleSearchChange}
             placeholder="Buscar por nombre, ID de estudiante o email..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="input w-full"
             disabled={!formData.courseId}
             autoComplete="off"
           />
           
           {showStudentList && formData.courseId && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 card border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
               {filteredStudents.length > 0 ? (
                 filteredStudents.map(student => (
                   <div
                     key={student.id}
                     onClick={() => selectStudent(student)}
-                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
+                    className="px-4 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer border-b dark:border-gray-700 last:border-b-0"
                   >
-                    <div className="font-medium text-gray-900">{student.name}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="font-medium text-gray-900 dark:text-gray-100">{student.name}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       {student.studentId} - {student.email}
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="px-4 py-2 text-gray-500 text-center">
+                <div className="px-4 py-2 text-gray-500 dark:text-gray-400 text-center">
                   No se encontraron estudiantes
                 </div>
               )}
@@ -250,11 +250,7 @@ const EnrollStudentForm = () => {
         <button
           type="submit"
           disabled={loading || !formData.courseId || !formData.studentId}
-          className={`w-full py-3 px-4 rounded-lg text-white font-semibold transition-colors ${
-            loading || !formData.courseId || !formData.studentId
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'
-          }`}
+          className="btn btn-primary w-full disabled:opacity-50"
         >
           {loading ? 'Inscribiendo...' : 'Inscribir Estudiante'}
         </button>
@@ -262,56 +258,56 @@ const EnrollStudentForm = () => {
 
       {/* Lista de Estudiantes Inscritos */}
       {formData.courseId && (
-        <div className="border-t pt-6">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800">
+        <div className="border-t dark:border-gray-700 pt-6">
+          <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
             Estudiantes Inscritos ({enrollments.length})
           </h3>
           
           {enrollments.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
+            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
               No hay estudiantes inscritos en este curso
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-800/60">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       ID Estudiante
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Nombre
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Facultad
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {enrollments.map(enrollment => (
-                    <tr key={enrollment.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <tr key={enrollment.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                         {enrollment.student?.studentId || 'N/A'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                         {enrollment.student?.name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                         {enrollment.student?.email}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                         {enrollment.student?.faculty || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
                           onClick={() => handleUnenroll(enrollment.id)}
-                          className="text-red-600 hover:text-red-900 font-medium"
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 font-medium"
                         >
                           Desinscribir
                         </button>

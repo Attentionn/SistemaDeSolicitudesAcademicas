@@ -1,6 +1,8 @@
 const express = require('express');
 const { Absence, User, Course } = require('../models');
 const { authenticateToken, authorizeRole } = require('../middleware/auth.middleware');
+const upload = require('../middleware/upload.middleware');
+const path = require('path');
 
 const router = express.Router();
 
@@ -67,7 +69,7 @@ router.get('/teacher', authenticateToken, authorizeRole('teacher', 'admin'), asy
 });
 
 // Create absence (ESTUDIANTES pueden avisar faltas futuras, PROFESORES registran faltas después)
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, upload.single('evidencia'), async (req, res) => {
   try {
     const { studentId, courseId, fecha, motivo, tipo } = req.body;
 
@@ -82,6 +84,9 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Curso no encontrado' });
     }
 
+    // Obtener ruta del archivo si se subió
+    const evidenciaPath = req.file ? path.relative(path.join(__dirname, '../../'), req.file.path) : null;
+
     // Si es estudiante, crear aviso de falta futura (tipo 'prevista')
     if (req.user.role === 'student') {
       const absence = await Absence.create({
@@ -90,7 +95,8 @@ router.post('/', authenticateToken, async (req, res) => {
         fecha,
         motivo: motivo || '',
         tipo: 'prevista',
-        teacherId: course.teacherId
+        teacherId: course.teacherId,
+        evidencia: evidenciaPath
       });
 
       const absenceWithDetails = await Absence.findByPk(absence.id, {
@@ -124,7 +130,8 @@ router.post('/', authenticateToken, async (req, res) => {
         fecha,
         motivo: motivo || '',
         tipo: tipo || 'injustificada',
-        teacherId: req.user.id
+        teacherId: req.user.id,
+        evidencia: evidenciaPath
       });
 
       const absenceWithDetails = await Absence.findByPk(absence.id, {
@@ -213,6 +220,35 @@ router.delete('/:id', authenticateToken, authorizeRole('teacher', 'admin'), asyn
 
     await absence.destroy();
     res.status(204).send();
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get evidence file (authenticated users)
+router.get('/evidencia/:absenceId', authenticateToken, async (req, res) => {
+  try {
+    const absence = await Absence.findByPk(req.params.absenceId);
+    
+    if (!absence) {
+      return res.status(404).json({ error: 'Ausencia no encontrada' });
+    }
+    
+    if (!absence.evidencia) {
+      return res.status(404).json({ error: 'No hay evidencia adjunta' });
+    }
+    
+    // Verificar permisos: solo el estudiante, el profesor o admin
+    if (req.user.role === 'student' && absence.studentId !== req.user.id) {
+      return res.status(403).json({ error: 'No tienes permiso para ver esta evidencia' });
+    }
+    
+    if (req.user.role === 'teacher' && absence.teacherId !== req.user.id) {
+      return res.status(403).json({ error: 'No tienes permiso para ver esta evidencia' });
+    }
+    
+    const filePath = path.join(__dirname, '../../', absence.evidencia);
+    res.sendFile(filePath);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
