@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -9,7 +10,6 @@ import SolicitudesPage from './pages/SolicitudesPage';
 import AbsenceManagement from './pages/AbsenceManagement';
 import AdminPanel from './pages/AdminPanel';
 import StudentRequests from './pages/StudentRequests';
-import EnrollmentManagement from './pages/EnrollmentManagement';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -33,8 +33,9 @@ function PrivateRoute({ children }) {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <Routes>
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
@@ -77,17 +78,10 @@ function App() {
               </PrivateRoute>
             }
           />
-          <Route
-            path="/inscripciones"
-            element={
-              <PrivateRoute>
-                <EnrollmentManagement />
-              </PrivateRoute>
-            }
-          />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
-      </AuthProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

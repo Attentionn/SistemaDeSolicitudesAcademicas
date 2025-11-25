@@ -170,6 +170,11 @@ export default function SolicitudesPage() {
     return types[type] || type;
   };
 
+  const getRequestCategoryLabel = (type) => {
+    // Actualmente todas las solicitudes aquí son acomodaciones (excepto posible aviso de falta si se mezclara)
+    return type === 'absence_notification' ? 'Aviso' : 'Acomodación';
+  };
+
   const getStatusLabel = (status) => {
     const statuses = {
       'pending': 'Pendiente',
@@ -190,13 +195,13 @@ export default function SolicitudesPage() {
 
   if (user?.role === 'student') {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-app text-app">
         <div className="py-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Solicitudes</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Solicitudes</h1>
           
           {/* Tabs */}
           <div className="mt-6">
-            <div className="border-b border-gray-200">
+            <div className="border-b border-gray-200 dark:border-gray-700">
               <nav className="-mb-px flex space-x-8">
                 <button
                   onClick={() => setActiveTab('create')}
@@ -224,14 +229,14 @@ export default function SolicitudesPage() {
 
           {/* Create Request Form */}
           {activeTab === 'create' && (
-            <div className="mt-6 bg-white shadow sm:rounded-lg">
+            <div className="mt-6 card shadow sm:rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
                   Crear Nueva Solicitud
                 </h3>
                 <form onSubmit={handleSubmit} className="mt-6 space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                       Tipo de Solicitud
                     </label>
                     <select
@@ -239,7 +244,7 @@ export default function SolicitudesPage() {
                       value={formData.type}
                       onChange={handleInputChange}
                       required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 input"
                     >
                       <option value="">Seleccionar tipo</option>
                       <option value="deadline_extension">Extensión de deadline</option>
@@ -250,7 +255,7 @@ export default function SolicitudesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                       Curso
                     </label>
                     <select
@@ -258,7 +263,7 @@ export default function SolicitudesPage() {
                       value={formData.courseId}
                       onChange={handleInputChange}
                       required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 input"
                     >
                       <option value="">Seleccionar curso</option>
                       {courses.map(course => (
@@ -272,7 +277,7 @@ export default function SolicitudesPage() {
                   {(formData.type === 'deadline_extension' || formData.type === 'assignment_extension' || formData.type === 'exam_change' || formData.type === 'exam_date_change') && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                           Fecha Original
                         </label>
                         <input
@@ -281,12 +286,12 @@ export default function SolicitudesPage() {
                           value={formData.fechaOriginal}
                           onChange={handleInputChange}
                           required
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 input"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                           Fecha Propuesta
                         </label>
                         <input
@@ -295,12 +300,12 @@ export default function SolicitudesPage() {
                           value={formData.fechaPropuesta}
                           onChange={handleInputChange}
                           required
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 input"
                         />
                       </div>
                       {(formData.type === 'deadline_extension' || formData.type === 'assignment_extension') && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                             Días de Extensión (opcional)
                           </label>
                           <input
@@ -309,7 +314,7 @@ export default function SolicitudesPage() {
                             name="extensionDays"
                             value={formData.extensionDays}
                             onChange={handleInputChange}
-                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="mt-1 input"
                             placeholder="Si lo dejas vacío se calculará con fechas"
                           />
                         </div>
@@ -318,7 +323,7 @@ export default function SolicitudesPage() {
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                       Motivo
                     </label>
                     <textarea
@@ -327,13 +332,13 @@ export default function SolicitudesPage() {
                       onChange={handleInputChange}
                       required
                       rows={4}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 input"
                       placeholder="Explica el motivo de tu solicitud..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                       Descripción Adicional
                     </label>
                     <textarea
@@ -341,7 +346,7 @@ export default function SolicitudesPage() {
                       value={formData.description}
                       onChange={handleInputChange}
                       rows={3}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 input"
                       placeholder="Información adicional (opcional)..."
                     />
                   </div>
@@ -350,7 +355,7 @@ export default function SolicitudesPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                      className="btn btn-primary disabled:opacity-50"
                     >
                       {loading ? 'Enviando...' : 'Enviar Solicitud'}
                     </button>
@@ -363,7 +368,7 @@ export default function SolicitudesPage() {
           {/* Student Requests List */}
           {activeTab === 'list' && (
             <div className="mt-6">
-              <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="card shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
                   {requests.map((request) => (
                     <li key={request.id}>
@@ -371,7 +376,7 @@ export default function SolicitudesPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium text-blue-600 truncate">
+                              <p className="text-sm font-medium text-blue-600 dark:text-blue-300 truncate">
                                 {getRequestTypeLabel(request.type)}
                               </p>
                               <div className="ml-2 flex-shrink-0 flex">
@@ -381,40 +386,40 @@ export default function SolicitudesPage() {
                               </div>
                             </div>
                             <div className="mt-2">
-                              <div className="flex items-center text-sm text-gray-500">
+                              <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
                                 <p>
                                   <span className="font-medium">Curso:</span> {request.course?.name}
                                 </p>
                               </div>
                               <div className="mt-1">
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
                                   <span className="font-medium">Motivo:</span> {request.motivo}
                                 </p>
                               </div>
                               {request.description && (
                                 <div className="mt-1">
-                                  <p className="text-sm text-gray-600">
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">
                                     <span className="font-medium">Descripción Adicional:</span> {request.description}
                                   </p>
                                 </div>
                               )}
                               {request.fechaOriginal && (
                                 <div className="mt-1">
-                                  <p className="text-sm text-gray-600">
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">
                                     <span className="font-medium">Fecha Original:</span> {new Date(request.fechaOriginal).toLocaleDateString()}
                                   </p>
                                 </div>
                               )}
                               {request.fechaPropuesta && (
                                 <div className="mt-1">
-                                  <p className="text-sm text-gray-600">
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">
                                     <span className="font-medium">Fecha Propuesta:</span> {new Date(request.fechaPropuesta).toLocaleDateString()}
                                   </p>
                                 </div>
                               )}
                               {request.teacherResponse && (
                                 <div className="mt-2">
-                                  <p className="text-sm text-gray-600">
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">
                                     <span className="font-medium">Respuesta del profesor:</span> {request.teacherResponse}
                                   </p>
                                 </div>
@@ -430,31 +435,31 @@ export default function SolicitudesPage() {
             </div>
           )}
         </div>
-      </div>
+      </main>
     );
   }
 
   // Teacher View
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-app text-app">
       <div className="py-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Solicitudes de Estudiantes</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Solicitudes de Acomodaciones de Estudiantes</h1>
         
         {/* Filters */}
-        <div className="mt-6 bg-white shadow sm:rounded-lg">
+        <div className="mt-6 card shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">
               Filtros
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                   Tipo de Solicitud
                 </label>
                 <select
                   value={filters.type}
                   onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 input"
                 >
                   <option value="">Todos los tipos</option>
                   <option value="deadline_extension">Extensión de deadline</option>
@@ -468,13 +473,13 @@ export default function SolicitudesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                   Estado
                 </label>
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 input"
                 >
                   <option value="">Todos los estados</option>
                   <option value="pending">Pendiente</option>
@@ -488,7 +493,7 @@ export default function SolicitudesPage() {
 
         {/* Teacher Requests List */}
         <div className="mt-6">
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="card shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
               {requests.map((request) => (
                 <li key={request.id}>
@@ -496,9 +501,11 @@ export default function SolicitudesPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-blue-600 truncate">
-                            {getRequestTypeLabel(request.type)}
-                          </p>
+                          <div className="truncate">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                              {getRequestCategoryLabel(request.type)} <span className="text-gray-500 dark:text-gray-300">·</span> <span className="text-blue-600 dark:text-blue-300">{getRequestTypeLabel(request.type)}</span>
+                            </p>
+                          </div>
                           <div className="ml-2 flex-shrink-0 flex">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(request.status)}`}>
                               {getStatusLabel(request.status)}
@@ -506,7 +513,7 @@ export default function SolicitudesPage() {
                           </div>
                         </div>
                         <div className="mt-2">
-                          <div className="flex items-center text-sm text-gray-500">
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
                             <p>
                               <span className="font-medium">Estudiante:</span> {request.student?.name}
                             </p>
@@ -515,34 +522,34 @@ export default function SolicitudesPage() {
                             </p>
                           </div>
                           <div className="mt-1">
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
                               <span className="font-medium">Motivo:</span> {request.motivo}
                             </p>
                           </div>
                           {request.description && (
                             <div className="mt-1">
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
                                 <span className="font-medium">Descripción Adicional:</span> {request.description}
                               </p>
                             </div>
                           )}
                           {request.fechaOriginal && (
                             <div className="mt-1">
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
                                 <span className="font-medium">Fecha Original:</span> {new Date(request.fechaOriginal).toLocaleDateString()}
                               </p>
                             </div>
                           )}
                           {request.fechaPropuesta && (
                             <div className="mt-1">
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
                                 <span className="font-medium">Fecha Propuesta:</span> {new Date(request.fechaPropuesta).toLocaleDateString()}
                               </p>
                             </div>
                           )}
                           {request.teacherResponse && (
                             <div className="mt-1">
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
                                 <span className="font-medium">Respuesta del Profesor:</span> {request.teacherResponse}
                               </p>
                             </div>
@@ -576,6 +583,6 @@ export default function SolicitudesPage() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

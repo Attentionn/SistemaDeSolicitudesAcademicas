@@ -114,29 +114,29 @@ export default function SuperAdminPanel() {
   // Solo permitir acceso a admin
   if (user?.role !== 'admin') {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-app text-app">
         <div className="py-6">
-          <div className="text-center">
+          <div className="text-center card">
             <h1 className="text-2xl font-bold text-red-600">Acceso Denegado</h1>
-            <p className="mt-2 text-gray-600">Solo los Administradores pueden acceder a esta sección.</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">Solo los Administradores pueden acceder a esta sección.</p>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-app text-app">
       <div className="py-6">
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Panel de Super Administración</h1>
-              <p className="mt-2 text-gray-600">Gestiona todos los usuarios del sistema</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Panel de Super Administración</h1>
+              <p className="mt-2 text-gray-600 dark:text-gray-300">Gestiona todos los usuarios del sistema</p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="btn btn-primary inline-flex items-center"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -147,13 +147,13 @@ export default function SuperAdminPanel() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" aria-label="Resumen de usuarios">
           {[
             { role: 'admin', label: 'Administradores', color: 'red' },
             { role: 'teacher', label: 'Profesores', color: 'blue' },
             { role: 'student', label: 'Estudiantes', color: 'green' }
           ].map(stat => (
-            <div key={stat.role} className="bg-white overflow-hidden shadow rounded-lg">
+            <div key={stat.role} className="card overflow-hidden shadow rounded-lg">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -165,8 +165,8 @@ export default function SuperAdminPanel() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{stat.label}</dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 truncate">{stat.label}</dt>
+                      <dd className="text-lg font-medium text-gray-900 dark:text-gray-100">
                         {users.filter(u => u.role === stat.role).length}
                       </dd>
                     </dl>
@@ -178,79 +178,78 @@ export default function SuperAdminPanel() {
         </div>
 
         {/* Users Table */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <div className="card shadow overflow-hidden sm:rounded-md">
           <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Usuarios del Sistema</h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Usuarios del Sistema</h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-300">
               Lista completa de todos los usuarios registrados
             </p>
           </div>
-          
           {loading ? (
             <div className="px-4 py-8">
               <div className="animate-pulse space-y-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="h-16 bg-gray-200 rounded"></div>
+                  <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
                 ))}
               </div>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matrícula</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facultad</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Registro</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Usuario</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rol</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Matrícula</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Facultad</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha de Registro</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {users.map((user) => (
                     <tr key={user.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                              <span className="text-sm font-medium text-gray-600">
+                            <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                              <span className="text-sm font-medium text-gray-600 dark:text-gray-200">
                                 {user.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-300">{user.email}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadge(user.role)}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadge(user.role)} dark:bg-opacity-40`}>
                           {getRoleText(user.role)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                         {user.studentId || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                         {user.faculty || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                         {new Date(user.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
                             onClick={() => openEditModal(user)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                           >
                             Editar
                           </button>
                           {user.role !== 'admin' && (
                             <button
                               onClick={() => handleDeleteUser(user.id)}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                             >
                               Eliminar
                             </button>
@@ -267,51 +266,51 @@ export default function SuperAdminPanel() {
 
         {/* Create User Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800 dark:border-gray-700">
               <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Usuario</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Crear Nuevo Usuario</h3>
                 <form onSubmit={handleCreateUser}>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Nombre completo</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Nombre completo</label>
                       <input
                         type="text"
                         name="name"
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.name}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Correo electrónico</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Correo electrónico</label>
                       <input
                         type="email"
                         name="email"
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.email}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Contraseña</label>
                       <input
                         type="password"
                         name="password"
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.password}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Rol</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Rol</label>
                       <select
                         name="role"
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.role}
                         onChange={handleInputChange}
                       >
@@ -322,23 +321,23 @@ export default function SuperAdminPanel() {
                     </div>
                     {formData.role === 'student' && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Matrícula</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Matrícula</label>
                         <input
                           type="text"
                           name="studentId"
                           required
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                           value={formData.studentId}
                           onChange={handleInputChange}
                         />
                       </div>
                     )}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Facultad</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Facultad</label>
                       <select
                         name="faculty"
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.faculty}
                         onChange={handleInputChange}
                       >
@@ -354,13 +353,13 @@ export default function SuperAdminPanel() {
                     <button
                       type="button"
                       onClick={() => setShowCreateModal(false)}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="btn btn-secondary"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="btn btn-primary"
                     >
                       Crear Usuario
                     </button>
@@ -373,51 +372,51 @@ export default function SuperAdminPanel() {
 
         {/* Edit User Modal */}
         {showEditModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800 dark:border-gray-700">
               <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Editar Usuario</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Editar Usuario</h3>
                 <form onSubmit={handleEditUser}>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Nombre completo</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Nombre completo</label>
                       <input
                         type="text"
                         name="name"
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.name}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Correo electrónico</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Correo electrónico</label>
                       <input
                         type="email"
                         name="email"
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.email}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Nueva contraseña (opcional)</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Nueva contraseña (opcional)</label>
                       <input
                         type="password"
                         name="password"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.password}
                         onChange={handleInputChange}
                         placeholder="Dejar vacío para mantener la actual"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Rol</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Rol</label>
                       <select
                         name="role"
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.role}
                         onChange={handleInputChange}
                       >
@@ -428,23 +427,23 @@ export default function SuperAdminPanel() {
                     </div>
                     {formData.role === 'student' && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Matrícula</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Matrícula</label>
                         <input
                           type="text"
                           name="studentId"
                           required
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                           value={formData.studentId}
                           onChange={handleInputChange}
                         />
                       </div>
                     )}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Facultad</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Facultad</label>
                       <select
                         name="faculty"
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         value={formData.faculty}
                         onChange={handleInputChange}
                       >
@@ -463,13 +462,13 @@ export default function SuperAdminPanel() {
                         setShowEditModal(false);
                         setEditingUser(null);
                       }}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="btn btn-secondary"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="btn btn-primary"
                     >
                       Actualizar Usuario
                     </button>
@@ -480,6 +479,6 @@ export default function SuperAdminPanel() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

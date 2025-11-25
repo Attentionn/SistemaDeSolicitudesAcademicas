@@ -1,8 +1,9 @@
 import React, { Fragment } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Navigation items are now generated dynamically based on user role
 
@@ -12,31 +13,32 @@ function classNames(...classes) {
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
+  const location = useLocation();
   const navigate = useNavigate();
 
   // Navigation items based on user role
+  const simplifiedRoutes = ['/solicitudes', '/faltas', '/mis-solicitudes'];
+  // Simplify also on student dashboard to avoid duplicate links (cards already provide entry points)
+  const isSimplified = simplifiedRoutes.includes(location.pathname) || ((user?.role === 'student' || user?.role === 'teacher') && location.pathname === '/dashboard');
+
   const getNavigationItems = () => {
-    const baseItems = [
+    if (isSimplified) {
+      return [ { name: 'Inicio', href: '/dashboard' } ];
+    }
+    const items = [
       { name: 'Inicio', href: '/dashboard' },
       { name: 'Solicitudes', href: '/solicitudes' },
       { name: 'Faltas', href: '/faltas' },
     ];
-
     if (user?.role === 'student') {
-      baseItems.push({ name: 'Mis Solicitudes', href: '/mis-solicitudes' });
+      items.push({ name: 'Mis Solicitudes', href: '/mis-solicitudes' });
     }
-
     if (user?.role === 'admin') {
-      // Link directo al panel admin real (/admin) y evitar duplicar dashboard
-      baseItems.push({ name: 'Admin', href: '/admin' });
-      baseItems.push({ name: 'Inscripciones', href: '/inscripciones' });
+      items.push({ name: 'Admin', href: '/admin' });
+      items.push({ name: 'Inscripciones', href: '/inscripciones' });
     }
-
-    if (user?.role === 'teacher') {
-      baseItems.push({ name: 'Inscripciones', href: '/inscripciones' });
-    }
-
-    return baseItems;
+    return items;
   };
 
   const handleLogout = () => {
@@ -49,7 +51,7 @@ export default function Navbar() {
   }
 
   return (
-    <Disclosure as="nav" className="bg-white shadow">
+    <Disclosure as="nav" className="bg-white dark:bg-gray-900 shadow" role="navigation" aria-label="Principal">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -65,17 +67,38 @@ export default function Navbar() {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-primary-500 hover:text-gray-700"
+                      aria-current={location.pathname === item.href ? 'page' : undefined}
+                      className={classNames(
+                        'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors',
+                        location.pathname === item.href
+                          ? 'border-primary-500 text-gray-900 dark:text-white'
+                          : 'border-transparent text-gray-600 dark:text-gray-300 hover:border-primary-500 hover:text-gray-800 dark:hover:text-gray-100'
+                      )}
                     >
                       {item.name}
                     </Link>
                   ))}
                 </div>
               </div>
-              <div className="hidden sm:ml-6 sm:flex sm:items-center">
+              <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
+                {/* Skip link para accesibilidad */}
+                <a
+                  href="#main-content"
+                  className="sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-md focus:bg-primary-600 focus:text-white focus:outline-none"
+                >
+                  Saltar al contenido principal
+                </a>
+                <button
+                  onClick={toggleTheme}
+                  type="button"
+                  aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                  className="rounded-md px-3 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                >
+                  {isDark ? '☀️ Claro' : '🌙 Oscuro'}
+                </button>
                 <Menu as="div" className="relative ml-3">
                   <div>
-                    <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                    <Menu.Button className="flex rounded-full bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                       <span className="sr-only">Abrir menú de usuario</span>
                       <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
                         <span className="text-primary-600 font-medium">
@@ -93,14 +116,14 @@ export default function Navbar() {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <Menu.Item>
                         {({ active }) => (
                           <Link
                             to="/profile"
                             className={classNames(
-                              active ? 'bg-gray-100' : '',
-                              'block px-4 py-2 text-sm text-gray-700'
+                              active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                              'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
                             )}
                           >
                             Tu perfil
@@ -112,8 +135,8 @@ export default function Navbar() {
                           <button
                             onClick={handleLogout}
                             className={classNames(
-                              active ? 'bg-gray-100' : '',
-                              'block w-full text-left px-4 py-2 text-sm text-gray-700'
+                              active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                              'block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
                             )}
                           >
                             Cerrar sesión
@@ -144,13 +167,19 @@ export default function Navbar() {
                   key={item.name}
                   as={Link}
                   to={item.href}
-                  className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-primary-500 hover:bg-primary-50 hover:text-gray-700"
+                  aria-current={location.pathname === item.href ? 'page' : undefined}
+                  className={classNames(
+                    'block border-l-4 py-2 pl-3 pr-4 text-base font-medium transition-colors',
+                    location.pathname === item.href
+                      ? 'border-primary-500 text-gray-900 dark:text-white'
+                      : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-100'
+                  )}
                 >
                   {item.name}
                 </Disclosure.Button>
               ))}
             </div>
-            <div className="border-t border-gray-200 pb-3 pt-4">
+            <div className="border-t border-gray-200 dark:border-gray-700 pb-3 pt-4">
               <div className="flex items-center px-4">
                 <div className="flex-shrink-0">
                   <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
@@ -160,24 +189,31 @@ export default function Navbar() {
                   </div>
                 </div>
                 <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800">{user.name}</div>
-                  <div className="text-sm font-medium text-gray-500">{user.email}</div>
+                  <div className="text-base font-medium text-gray-800 dark:text-gray-100">{user.name}</div>
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-300">{user.email}</div>
                 </div>
               </div>
               <div className="mt-3 space-y-1">
                 <Disclosure.Button
                   as={Link}
                   to="/profile"
-                  className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                  className="block px-4 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-100"
                 >
                   Tu perfil
                 </Disclosure.Button>
                 <Disclosure.Button
                   as="button"
                   onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                  className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-100"
                 >
                   Cerrar sesión
+                </Disclosure.Button>
+                <Disclosure.Button
+                  as="button"
+                  onClick={toggleTheme}
+                  className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-100"
+                >
+                  {isDark ? 'Modo claro' : 'Modo oscuro'}
                 </Disclosure.Button>
               </div>
             </div>

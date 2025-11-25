@@ -180,13 +180,13 @@ export default function AbsenceManagement() {
 
   if (user?.role === 'student') {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-app text-app">
         <div className="py-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Gestión de Faltas</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Gestión de Faltas</h1>
           
           {/* Tabs */}
           <div className="mt-6">
-            <div className="border-b border-gray-200">
+            <div className="border-b border-gray-200 dark:border-gray-700">
               <nav className="-mb-px flex space-x-8">
                 <button
                   onClick={() => setActiveTab('list')}
@@ -216,11 +216,11 @@ export default function AbsenceManagement() {
           {activeTab === 'list' && (
             <div className="mt-6">
               {absences.length === 0 ? (
-                <div className="bg-white shadow sm:rounded-lg p-6 text-center">
-                  <p className="text-gray-600">No tienes faltas registradas</p>
+                <div className="card shadow sm:rounded-lg p-6 text-center">
+                  <p className="text-gray-600 dark:text-gray-300">No tienes faltas registradas</p>
                 </div>
               ) : (
-                <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                <div className="card shadow overflow-hidden sm:rounded-md">
                   <ul className="divide-y divide-gray-200">
                     {absences.map((absence) => (
                       <li key={absence.id}>
@@ -228,7 +228,7 @@ export default function AbsenceManagement() {
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-blue-600 truncate">
+                                <p className="text-sm font-medium text-blue-600 dark:text-blue-300 truncate">
                                   {absence.course?.name}
                                 </p>
                                 <div className="ml-2 flex-shrink-0 flex">
@@ -238,7 +238,7 @@ export default function AbsenceManagement() {
                                 </div>
                               </div>
                               <div className="mt-2">
-                                <div className="flex items-center text-sm text-gray-500">
+                                <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
                                   <p>
                                     <span className="font-medium">Fecha:</span> {new Date(absence.fecha).toLocaleDateString()}
                                   </p>
@@ -248,14 +248,14 @@ export default function AbsenceManagement() {
                                 </div>
                                 {absence.motivo && (
                                   <div className="mt-1">
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">
                                       <span className="font-medium">Motivo:</span> {absence.motivo}
                                     </p>
                                   </div>
                                 )}
                                 {absence.observaciones && (
                                   <div className="mt-1">
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">
                                       <span className="font-medium">Observaciones:</span> {absence.observaciones}
                                     </p>
                                   </div>
@@ -274,17 +274,17 @@ export default function AbsenceManagement() {
 
           {/* Notify Future Absence Form */}
           {activeTab === 'notify' && (
-            <div className="mt-6 bg-white shadow sm:rounded-lg">
+            <div className="mt-6 card shadow sm:rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
                   Avisar Falta Futura
                 </h3>
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                   Avisa a tus profesores si sabes que vas a faltar a una clase
                 </p>
                 <form onSubmit={handleSubmit} className="mt-6 space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                       Curso *
                     </label>
                     <select
@@ -292,7 +292,7 @@ export default function AbsenceManagement() {
                       value={formData.courseId}
                       onChange={handleInputChange}
                       required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 input"
                     >
                       <option value="">Seleccionar curso</option>
                       {courses.map(course => (
@@ -304,7 +304,7 @@ export default function AbsenceManagement() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                       Fecha de la Falta *
                     </label>
                     <input
@@ -313,12 +313,12 @@ export default function AbsenceManagement() {
                       value={formData.fecha}
                       onChange={handleInputChange}
                       required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 input"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                       Motivo
                     </label>
                     <textarea
@@ -326,7 +326,7 @@ export default function AbsenceManagement() {
                       value={formData.motivo}
                       onChange={handleInputChange}
                       rows={4}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 input"
                       placeholder="Explica el motivo de tu falta..."
                     />
                   </div>
@@ -335,7 +335,7 @@ export default function AbsenceManagement() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                      className="btn btn-primary disabled:opacity-50"
                     >
                       {loading ? 'Enviando...' : 'Enviar Aviso'}
                     </button>
@@ -345,127 +345,26 @@ export default function AbsenceManagement() {
             </div>
           )}
         </div>
-      </div>
+      </main>
     );
   }
 
   // Teacher View
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-app text-app">
       <div className="py-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Faltas de Estudiantes</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Gestión de Faltas de Estudiantes</h1>
         
-        {/* Filters */}
-        <div className="mt-6 bg-white shadow sm:rounded-lg">
+        {/* Se removieron filtros y formulario de registro manual por falta de uso */}
+        <div className="mt-6 card shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Filtros
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-1">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Estudiante
-                </label>
-                <select
-                  value={filters.studentId}
-                  onChange={(e) => setFilters(prev => ({ ...prev, studentId: e.target.value }))}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                >
-                  <option value="">Todos los estudiantes</option>
-                  {/* This would need to be populated with students from the teacher's courses */}
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Register New Absence Form */}
-        <div className="mt-6 bg-white shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Registrar Nueva Falta
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Curso *
-                  </label>
-                  <select
-                    name="courseId"
-                    value={formData.courseId}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  >
-                    <option value="">Seleccionar curso</option>
-                    {courses.map(course => (
-                      <option key={course.id} value={course.id}>
-                        {course.name} - {course.code}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Estudiante *
-                  </label>
-                  <select
-                    name="studentId"
-                    value={formData.studentId}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  >
-                    <option value="">Seleccionar estudiante</option>
-                    {/* Would need to populate with students from selected course */}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Fecha de la Falta *
-                  </label>
-                  <input
-                    type="date"
-                    name="fecha"
-                    value={formData.fecha}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Motivo
-                  </label>
-                  <textarea
-                    name="motivo"
-                    value={formData.motivo}
-                    onChange={handleInputChange}
-                    rows={2}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="Motivo de la falta (opcional)"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {loading ? 'Registrando...' : 'Registrar Falta'}
-              </button>
-            </form>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Vista simplificada: sólo se muestran las faltas registradas y acciones para justificarlas o marcarlas como injustificadas. Si necesitas volver a registrar faltas manualmente puedo reactivarlo.</p>
           </div>
         </div>
 
         {/* Teacher Absences List */}
         <div className="mt-6">
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="card shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
               {absences.map((absence) => (
                 <li key={absence.id}>
@@ -473,7 +372,7 @@ export default function AbsenceManagement() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-blue-600 truncate">
+                          <p className="text-sm font-medium text-blue-600 dark:text-blue-300 truncate">
                             {absence.course?.name}
                           </p>
                           <div className="ml-2 flex-shrink-0 flex">
@@ -483,7 +382,7 @@ export default function AbsenceManagement() {
                           </div>
                         </div>
                         <div className="mt-2">
-                          <div className="flex items-center text-sm text-gray-500">
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
                             <p>
                               <span className="font-medium">Estudiante:</span> {absence.student?.name}
                             </p>
@@ -496,14 +395,14 @@ export default function AbsenceManagement() {
                           </div>
                           {absence.motivo && (
                             <div className="mt-1">
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
                                 <span className="font-medium">Motivo:</span> {absence.motivo}
                               </p>
                             </div>
                           )}
                           {absence.observaciones && (
                             <div className="mt-1">
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
                                 <span className="font-medium">Observaciones:</span> {absence.observaciones}
                               </p>
                             </div>
@@ -540,6 +439,6 @@ export default function AbsenceManagement() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

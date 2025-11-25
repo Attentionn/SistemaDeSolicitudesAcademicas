@@ -2,28 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light/Dark theme CSS variables (WCAG AA contrast oriented) */
+:root {
+  --color-bg: #ffffff;
+  --color-bg-alt: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-text: #121417;
+  --color-text-muted: #4b5563;
+  --color-border: #d9e0e6;
+  --color-primary: #0ea5e9; /* Existing primary-500 */
+  --color-primary-hover: #0284c7; /* primary-600 */
+  --color-focus: #0ea5e9;
+}
+
+.dark {
+  --color-bg: #0f141a; /* Deep neutral for high contrast */
+  --color-bg-alt: #1c252e; /* Elevated surfaces */
+  --color-surface: #1e2933; /* Cards */
+  --color-text: #f1f5f9; /* Almost white for readability */
+  --color-text-muted: #cbd5e1; /* Muted but >4.5:1 against bg */
+  --color-border: #2f3c48; /* Subtle separators */
+  --color-primary: #38bdf8; /* Slightly brighter for dark mode */
+  --color-primary-hover: #0ea5e9;
+  --color-focus: #38bdf8;
+}
+
+html, body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+body {
+  transition: background-color .25s ease, color .25s ease;
+}
+
+/* Scrollbar theming for dark mode (optional, accessible contrast) */
+body::-webkit-scrollbar { width: 12px; }
+body::-webkit-scrollbar-track { background: var(--color-bg); }
+body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 6px; }
+.dark body::-webkit-scrollbar-thumb { background: var(--color-border); }
+
 @layer components {
   .btn {
     @apply px-4 py-2 rounded-md font-medium transition-colors duration-200;
   }
   
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
   }
   
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400;
   }
   
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200;
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-md p-6;
+    @apply bg-white rounded-lg shadow-md p-6 dark:bg-gray-800 dark:text-gray-100;
   }
 } 
+
+/* Utility classes mapping to CSS variables (can be used progressively) */
+.bg-app { background-color: var(--color-bg); }
+.bg-app-alt { background-color: var(--color-bg-alt); }
+.text-app { color: var(--color-text); }
+.text-app-muted { color: var(--color-text-muted); }
+.border-app { border-color: var(--color-border); }
+.focus-ring-app:focus { outline: 2px solid var(--color-focus); outline-offset: 2px; }

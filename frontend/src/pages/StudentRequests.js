@@ -17,7 +17,6 @@ export default function StudentRequests() {
 
   useEffect(() => {
     fetchRequests();
-    // Auto-refresh every 5 seconds
     const interval = setInterval(fetchRequests, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -37,25 +36,47 @@ export default function StudentRequests() {
 
   const filteredRequests = requests.filter(request => {
     if (activeTab === 'all') return true;
-    // Solo filtrar por status si es accommodation (las absences no tienen status)
-    if (request.type === 'accommodation') {
-      if (activeTab === 'pending') return request.status === 'pending';
-      if (activeTab === 'approved') return request.status === 'approved';
-      if (activeTab === 'rejected') return request.status === 'rejected';
+    if (activeTab === 'pending') {
+      return (request.type === 'accommodation' && request.status === 'pending') || 
+             (request.type === 'absence' && request.tipo === 'prevista');
+    }
+    if (activeTab === 'approved') {
+      return (request.type === 'accommodation' && request.status === 'approved') || 
+             (request.type === 'absence' && request.tipo === 'justificada');
+    }
+    if (activeTab === 'rejected') {
+      return (request.type === 'accommodation' && request.status === 'rejected') || 
+             (request.type === 'absence' && request.tipo === 'injustificada');
     }
     return false;
   });
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (request) => {
+    let status;
+    if (request.type === 'accommodation') {
+      status = request.status;
+    } else if (request.type === 'absence') {
+      if (request.tipo === 'prevista') status = 'pending';
+      else if (request.tipo === 'justificada') status = 'approved';
+      else if (request.tipo === 'injustificada') status = 'rejected';
+    }
     const badges = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800'
+      pending: 'bg-yellow-100 dark:bg-yellow-300 text-yellow-800 dark:text-yellow-900',
+      approved: 'bg-green-100 dark:bg-green-400 text-green-800 dark:text-green-900',
+      rejected: 'bg-red-100 dark:bg-red-400 text-red-800 dark:text-red-900'
     };
-    return badges[status] || 'bg-gray-100 text-gray-800';
+    return badges[status] || 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-100';
   };
 
-  const getStatusText = (status) => {
+  const getStatusText = (request) => {
+    let status;
+    if (request.type === 'accommodation') {
+      status = request.status;
+    } else if (request.type === 'absence') {
+      if (request.tipo === 'prevista') status = 'pending';
+      else if (request.tipo === 'justificada') status = 'approved';
+      else if (request.tipo === 'injustificada') status = 'rejected';
+    }
     const texts = {
       pending: 'Pendiente',
       approved: 'Aprobada',
@@ -64,38 +85,36 @@ export default function StudentRequests() {
     return texts[status] || status;
   };
 
-  const getTypeText = (type) => {
-    return type === 'absence' ? 'Ausencia' : 'Acomodación';
-  };
+  const getTypeText = (type) => (type === 'absence' ? 'Ausencia' : 'Acomodación');
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-6">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
             <div className="space-y-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
               ))}
             </div>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main id="main-content" role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-app text-app">
       <div className="py-6">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mis Solicitudes</h1>
-            <p className="mt-2 text-gray-600">Revisa el estado de tus solicitudes</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Mis Solicitudes</h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">Revisa el estado de tus solicitudes</p>
           </div>
           <button
             onClick={fetchRequests}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            className="btn btn-primary"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -104,9 +123,8 @@ export default function StudentRequests() {
           </button>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="card overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -118,15 +136,15 @@ export default function StudentRequests() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total</dt>
-                    <dd className="text-lg font-medium text-gray-900">{requests.length}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 truncate">Total</dt>
+                    <dd className="text-lg font-medium text-gray-900 dark:text-gray-100">{requests.length}</dd>
                   </dl>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="card overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -138,9 +156,9 @@ export default function StudentRequests() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Pendientes</dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {requests.filter(r => r.status === 'pending').length}
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 truncate">Pendientes</dt>
+                    <dd className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                      {requests.filter(r => (r.type === 'accommodation' && r.status === 'pending') || (r.type === 'absence' && r.tipo === 'prevista')).length}
                     </dd>
                   </dl>
                 </div>
@@ -148,7 +166,7 @@ export default function StudentRequests() {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="card overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -160,9 +178,9 @@ export default function StudentRequests() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Aprobadas</dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {requests.filter(r => r.status === 'approved').length}
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 truncate">Aprobadas</dt>
+                    <dd className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                      {requests.filter(r => (r.type === 'accommodation' && r.status === 'approved') || (r.type === 'absence' && r.tipo === 'justificada')).length}
                     </dd>
                   </dl>
                 </div>
@@ -170,7 +188,7 @@ export default function StudentRequests() {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="card overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -182,9 +200,9 @@ export default function StudentRequests() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Rechazadas</dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {requests.filter(r => r.status === 'rejected').length}
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 truncate">Rechazadas</dt>
+                    <dd className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                      {requests.filter(r => (r.type === 'accommodation' && r.status === 'rejected') || (r.type === 'absence' && r.tipo === 'injustificada')).length}
                     </dd>
                   </dl>
                 </div>
@@ -193,14 +211,13 @@ export default function StudentRequests() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
           <nav className="-mb-px flex space-x-8">
             {[
               { key: 'all', label: 'Todas', count: requests.length },
-              { key: 'pending', label: 'Pendientes', count: requests.filter(r => r.status === 'pending').length },
-              { key: 'approved', label: 'Aprobadas', count: requests.filter(r => r.status === 'approved').length },
-              { key: 'rejected', label: 'Rechazadas', count: requests.filter(r => r.status === 'rejected').length }
+              { key: 'pending', label: 'Pendientes', count: requests.filter(r => (r.type === 'accommodation' && r.status === 'pending') || (r.type === 'absence' && r.tipo === 'prevista')).length },
+              { key: 'approved', label: 'Aprobadas', count: requests.filter(r => (r.type === 'accommodation' && r.status === 'approved') || (r.type === 'absence' && r.tipo === 'justificada')).length },
+              { key: 'rejected', label: 'Rechazadas', count: requests.filter(r => (r.type === 'accommodation' && r.status === 'rejected') || (r.type === 'absence' && r.tipo === 'injustificada')).length }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -208,7 +225,7 @@ export default function StudentRequests() {
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'
                 }`}
               >
                 {tab.label} ({tab.count})
@@ -217,53 +234,51 @@ export default function StudentRequests() {
           </nav>
         </div>
 
-        {/* Requests List */}
         <div className="space-y-4">
           {filteredRequests.length === 0 ? (
             <div className="text-center py-12">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No hay solicitudes</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {activeTab === 'all' 
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No hay solicitudes</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
+                {activeTab === 'all'
                   ? 'No has realizado ninguna solicitud aún'
-                  : `No hay solicitudes ${activeTab === 'pending' ? 'pendientes' : activeTab === 'approved' ? 'aprobadas' : 'rechazadas'}`
-                }
+                  : `No hay solicitudes ${activeTab === 'pending' ? 'pendientes' : activeTab === 'approved' ? 'aprobadas' : 'rechazadas'}`}
               </p>
             </div>
           ) : (
             filteredRequests.map(request => (
-              <div key={request.id} className="bg-white shadow rounded-lg p-6">
+              <div key={request.id} className="card shadow rounded-lg p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                         {getTypeText(request.type)}
                       </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(request.status)}`}>
-                        {getStatusText(request.status)}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(request)}`}>
+                        {getStatusText(request)}
                       </span>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
-                        <p className="text-sm text-gray-500">Curso</p>
-                        <p className="text-sm font-medium text-gray-900">{request.course?.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-300">Curso</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{request.course?.name}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Profesor</p>
-                        <p className="text-sm font-medium text-gray-900">{request.teacher?.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-300">Profesor</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{request.teacher?.name}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Fecha de solicitud</p>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm text-gray-500 dark:text-gray-300">Fecha de solicitud</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {new Date(request.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Última actualización</p>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm text-gray-500 dark:text-gray-300">Última actualización</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {new Date(request.updatedAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -271,53 +286,52 @@ export default function StudentRequests() {
 
                     {request.motivo && (
                       <div className="mb-4">
-                        <p className="text-sm text-gray-500">Motivo</p>
-                        <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
+                        <p className="text-sm text-gray-500 dark:text-gray-300">Motivo</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
                           {request.motivo}
                         </p>
                       </div>
                     )}
                     {request.description && (
                       <div className="mb-4">
-                        <p className="text-sm text-gray-500">Descripción Adicional</p>
-                        <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
+                        <p className="text-sm text-gray-500 dark:text-gray-300">Descripción Adicional</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
                           {request.description}
                         </p>
                       </div>
                     )}
 
-                    {/* Campos específicos de acomodaciones */}
                     {request.type === 'accommodation' && (
                       <div className="mb-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {request.requestedDate && (
                             <div>
-                              <p className="text-sm text-gray-500">Fecha Original</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm text-gray-500 dark:text-gray-300">Fecha Original</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {new Date(request.requestedDate).toLocaleDateString()}
                               </p>
                             </div>
                           )}
                           {request.newDate && (
                             <div>
-                              <p className="text-sm text-gray-500">Fecha Propuesta</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm text-gray-500 dark:text-gray-300">Fecha Propuesta</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {new Date(request.newDate).toLocaleDateString()}
                               </p>
                             </div>
                           )}
                           {request.newClassroom && (
                             <div>
-                              <p className="text-sm text-gray-500">Nuevo Aula</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm text-gray-500 dark:text-gray-300">Nuevo Aula</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {request.newClassroom}
                               </p>
                             </div>
                           )}
                           {request.extensionDays && (
                             <div>
-                              <p className="text-sm text-gray-500">Días de Extensión</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm text-gray-500 dark:text-gray-300">Días de Extensión</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {request.extensionDays} días
                               </p>
                             </div>
@@ -326,28 +340,27 @@ export default function StudentRequests() {
                       </div>
                     )}
 
-                    {/* Campos específicos de ausencias */}
                     {request.type === 'absence' && request.fecha && (
                       <div className="mb-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-sm text-gray-500">Fecha de Ausencia</p>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm text-gray-500 dark:text-gray-300">Fecha de Ausencia</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {new Date(request.fecha).toLocaleDateString()}
                             </p>
                           </div>
                           {request.materia && (
                             <div>
-                              <p className="text-sm text-gray-500">Materia</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm text-gray-500 dark:text-gray-300">Materia</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {request.materia}
                               </p>
                             </div>
                           )}
                           {request.tipo && (
                             <div>
-                              <p className="text-sm text-gray-500">Tipo de Ausencia</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm text-gray-500 dark:text-gray-300">Tipo de Ausencia</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {request.tipo}
                               </p>
                             </div>
@@ -358,13 +371,13 @@ export default function StudentRequests() {
 
                     {request.observaciones && (
                       <div className="mb-4">
-                        <p className="text-sm text-gray-500">Observaciones del Profesor</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-300">Observaciones del Profesor</p>
                         <p className={`text-sm p-3 rounded-md ${
-                          request.tipo === 'justificada' 
-                            ? 'text-green-900 bg-green-50' 
+                          request.tipo === 'justificada'
+                            ? 'text-green-900 bg-green-50 dark:bg-green-900 dark:text-green-100'
                             : request.tipo === 'injustificada'
-                            ? 'text-red-900 bg-red-50'
-                            : 'text-gray-900 bg-gray-50'
+                            ? 'text-red-900 bg-red-50 dark:bg-red-900 dark:text-red-100'
+                            : 'text-gray-900 bg-gray-50 dark:bg-gray-800 dark:text-gray-100'
                         }`}>
                           {request.observaciones}
                         </p>
@@ -373,13 +386,13 @@ export default function StudentRequests() {
 
                     {request.teacherComment && (
                       <div className="mb-4">
-                        <p className="text-sm text-gray-500">Comentario del profesor</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-300">Comentario del profesor</p>
                         <p className={`text-sm p-3 rounded-md ${
-                          request.status === 'approved' 
-                            ? 'text-green-900 bg-green-50' 
+                          request.status === 'approved'
+                            ? 'text-green-900 bg-green-50 dark:bg-green-900 dark:text-green-100'
                             : request.status === 'rejected'
-                            ? 'text-red-900 bg-red-50'
-                            : 'text-gray-900 bg-gray-50'
+                            ? 'text-red-900 bg-red-50 dark:bg-red-900 dark:text-red-100'
+                            : 'text-gray-900 bg-gray-50 dark:bg-gray-800 dark:text-gray-100'
                         }`}>
                           {request.teacherComment}
                         </p>
@@ -392,6 +405,6 @@ export default function StudentRequests() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
